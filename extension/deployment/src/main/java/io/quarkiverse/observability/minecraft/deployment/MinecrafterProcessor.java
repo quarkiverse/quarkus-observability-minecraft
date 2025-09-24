@@ -1,43 +1,34 @@
 package io.quarkiverse.observability.minecraft.deployment;
 
-import io.quarkiverse.observability.minecraft.runtime.HelloRecorder;
-import io.quarkiverse.observability.minecraft.runtime.MinecraftLog;
-import io.quarkiverse.observability.minecraft.runtime.MinecraftLogHandlerMaker;
-import io.quarkiverse.observability.minecraft.runtime.MinecraftLogInterceptor;
-import io.quarkiverse.observability.minecraft.runtime.MinecraftService;
-import io.quarkiverse.observability.minecraft.runtime.RestExceptionMapper;
+import static io.quarkus.deployment.annotations.ExecutionTime.RUNTIME_INIT;
+import static io.quarkus.deployment.annotations.ExecutionTime.STATIC_INIT;
+
+import java.util.Map;
+
+import jakarta.ws.rs.Priorities;
+
+import org.jboss.jandex.DotName;
+
+import io.quarkiverse.observability.minecraft.runtime.*;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.arc.deployment.AnnotationsTransformerBuildItem;
 import io.quarkus.arc.deployment.BeanContainerBuildItem;
 import io.quarkus.arc.processor.AnnotationsTransformer;
+import io.quarkus.deployment.Feature;
 import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.DevServicesResultBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
-import io.quarkus.deployment.builditem.LaunchModeBuildItem;
 import io.quarkus.deployment.builditem.LogHandlerBuildItem;
 import io.quarkus.deployment.dev.devservices.DevServicesConfig;
 import io.quarkus.resteasy.reactive.spi.ExceptionMapperBuildItem;
-import jakarta.ws.rs.Priorities;
-import org.jboss.jandex.DotName;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.utility.DockerImageName;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import static io.quarkus.deployment.annotations.ExecutionTime.RUNTIME_INIT;
-import static io.quarkus.deployment.annotations.ExecutionTime.STATIC_INIT;
 
 class MinecrafterProcessor {
 
     private static final String FEATURE = "minecrafter";
     private static final DotName JAX_RS_GET = DotName.createSimple("jakarta.ws.rs.GET");
-
 
     @BuildStep
     FeatureBuildItem feature() {
@@ -92,40 +83,18 @@ class MinecrafterProcessor {
     }
 
     @BuildStep(onlyIfNot = IsNormal.class, onlyIf = DevServicesConfig.Enabled.class)
-    public DevServicesResultBuildItem createContainer(LaunchModeBuildItem launchMode) {
-        final int minecraftGamePort = 25565;
+    public DevServicesResultBuildItem createContainer() {
+
         final int minecraftApiPort = 8081;
 
-        // Normally, this would be a remote image, but we need to build one with the right mods, so use a local one
-        DockerImageName dockerImageName = DockerImageName.parse("minecraft-server");
+        // TODO this is the wrong feature name; a feature must be set, but to do it properly needs https://github.com/quarkusio/quarkus/pull/50270
+        return DevServicesResultBuildItem.owned()
+                .feature(Feature.OBSERVABILITY)
+                .serviceName(FEATURE)
+                .startable(() -> new MinecraftContainer(minecraftApiPort))
+                .configProvider(Map.of("quarkus.minecrafter.base-url",
+                        c -> "http://" + c.getHost() + ":" + c.getMappedPort(minecraftApiPort)))
+                .build();
 
-
-        // Don't be tempted to put this in a try-with-resources block, even if the IDE advises it
-        // Otherwise the dev service gets shut down after startup :)
-        GenericContainer container = new GenericContainer<>(dockerImageName)
-                .waitingFor(Wait.forLogMessage(".*" + "Preparing" + ".*", 1))
-                .withReuse(true)
-                .withExposedPorts(minecraftApiPort, minecraftGamePort);
-
-        // Make life easy for the minecraft client by fixing the client port
-        // This could be configurable
-        List<String> portBindings = new ArrayList<>();
-        portBindings.add(minecraftGamePort + ":" + minecraftGamePort);
-        container.setPortBindings(portBindings);
-
-        container.start();
-
-        // Set a config property so that anything using the container can find it, even on the random port
-
-        Map<String, String> props = Map.of("quarkus.minecrafter.base-url",
-                "http://" + container.getHost() + ":" + container.getMappedPort(minecraftApiPort));
-
-        System.out.println("API port: " + "http://" + container.getHost() + ":" + container.getMappedPort(minecraftApiPort));
-        System.out.println("Game port: " + "http://" + container.getHost() + ":" + container.getMappedPort(minecraftGamePort));
-
-        return new DevServicesResultBuildItem.RunningDevService(FEATURE, container.getContainerId(),
-                container::close, props)
-                .toBuildItem();
     }
 }
-
