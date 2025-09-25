@@ -1,11 +1,11 @@
 package io.quarkiverse.observability.minecraft.runtime;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
+
 import jakarta.interceptor.AroundInvoke;
 import jakarta.interceptor.Interceptor;
 import jakarta.interceptor.InvocationContext;
-
-import java.lang.reflect.Method;
-
 
 @MinecraftLog
 @Interceptor
@@ -23,14 +23,13 @@ public class MinecraftLogInterceptor {
         // Simple implementation for now
         System.out.println("\uD83D\uDDE1️ [Minecrafter] Spotted use of " +
                 method.getDeclaringClass()
-                        .getSimpleName() + "." +
+                        .getSimpleName()
+                + "." +
                 method.getName());
 
-        minecraft.recordVisit();
+        minecraft.recordVisit(Arrays.toString(context.getParameters()));
 
         return context.proceed();
     }
 
 }
-
-

@@ -10,6 +10,7 @@ import jakarta.ws.rs.Priorities;
 import org.jboss.jandex.DotName;
 
 import io.quarkiverse.observability.minecraft.runtime.*;
+import io.quarkiverse.observability.minecraft.runtime.ai.LLMWuffMaker;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.arc.deployment.AnnotationsTransformerBuildItem;
 import io.quarkus.arc.deployment.BeanContainerBuildItem;
@@ -29,6 +30,8 @@ class MinecrafterProcessor {
 
     private static final String FEATURE = "minecrafter";
     private static final DotName JAX_RS_GET = DotName.createSimple("jakarta.ws.rs.GET");
+    private static final DotName JAX_RS_POST = DotName.createSimple("jakarta.ws.rs.POST");
+    private static final DotName JAX_RS_PUT = DotName.createSimple("jakarta.ws.rs.PUT");
 
     @BuildStep
     FeatureBuildItem feature() {
@@ -54,6 +57,8 @@ class MinecrafterProcessor {
     void beans(BuildProducer<AdditionalBeanBuildItem> producer) {
         producer.produce(AdditionalBeanBuildItem.unremovableOf(MinecraftLogInterceptor.class));
         producer.produce(AdditionalBeanBuildItem.unremovableOf(MinecraftService.class));
+        producer.produce(AdditionalBeanBuildItem.unremovableOf(LLMWuffMaker.class));
+
     }
 
     @BuildStep
@@ -67,7 +72,13 @@ class MinecrafterProcessor {
             public void transform(TransformationContext context) {
                 if (context.getTarget()
                         .asMethod()
-                        .hasAnnotation(JAX_RS_GET)) {
+                        .hasAnnotation(JAX_RS_GET)
+                        || context.getTarget()
+                                .asMethod()
+                                .hasAnnotation(JAX_RS_POST)
+                        || context.getTarget()
+                                .asMethod()
+                                .hasAnnotation(JAX_RS_PUT)) {
                     context.transform()
                             .add(MinecraftLog.class)
                             .done();

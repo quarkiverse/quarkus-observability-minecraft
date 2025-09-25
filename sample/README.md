@@ -1,5 +1,7 @@
 # TODO Applications with Quarkus
 
+Do a `npm install` in `sample/src/main/resources/META-INF/resources/js` *first*.
+
 ```bash
 mvn quarkus:dev
 ```

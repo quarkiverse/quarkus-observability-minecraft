@@ -52,6 +52,9 @@ a menu. Edit `options.txt` in
 your [minecraft folder](https://gaming.stackexchange.com/questions/15664/can-i-alt-tab-out-of-minecraft-without-the-game-auto-pausing)
 , and change `pauseOnLostFocus` to `false`.
 
+You will also need to remove the custom mod functionality from the server. This will need (todo!) an environment
+variable added to control that.
+
 ### Build the extension
 
 ```bash

@@ -1,12 +1,13 @@
 package com.example.examplemod;
 
-import org.jetbrains.annotations.NotNull;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+
+import org.jetbrains.annotations.NotNull;
 
 @Path("/observability")
 public class Endpoint {
@@ -24,10 +25,22 @@ public class Endpoint {
     }
 
     @POST
+    @Path("/event-with-details")
+    @Consumes("application/json")
+    //    @Produces("text/plain")
+    public String alert(String config) {
+        System.out.println("[Quarkcraft] " + config);
+        String name = invokeOnPlayer("customEvent", "A thing happened out in the real world",
+                config);
+        return name;
+
+    }
+
+    @POST
     @Path("/event")
     @Consumes("text/plain")
-    public String alert(String type) {
-        System.out.println("[Quarkcraft] event");
+    public String simpleAlert(String type) {
+        System.out.println("[Quarkcraft] event" + type);
         return invokeOnPlayer("event", "A thing happened out in the real world", type);
 
     }
@@ -42,11 +55,11 @@ public class Endpoint {
     @NotNull
     private String invokeOnPlayer(String methodName, String message, String param) {
         if (player != null) {
-// The player may be in a different classloader to us, so we need to use more reflection
+            // The player may be in a different classloader to us, so we need to use more reflection
             try {
                 // Cheerfully assume all methods on PlayerWrapper take a string as an argument
                 Method m = player.getClass()
-                                 .getMethod(methodName, String.class, String.class);
+                        .getMethod(methodName, String.class, String.class);
                 m.invoke(player, message, param);
                 return "minecraft world updated with " + methodName;
             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
@@ -61,6 +74,5 @@ public class Endpoint {
     public static void setPlayer(Object newPlayer) {
         player = newPlayer;
     }
-
 
 }

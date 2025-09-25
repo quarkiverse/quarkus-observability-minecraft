@@ -137,10 +137,11 @@ dependencies {
     // implementation fg.deobf("com.tterrag.registrate:Registrate:MC${mc_version}-${registrate_version}") // Adds registrate as a dependency
 
 
-    implementation "javax.ws.rs:javax.ws.rs-api:2.0.1"
+//    implementation "jakarta.ws.rs:jakarta.ws.rs-api:2.1"
     // A recent version, like this one is needed to avoid a crash looking for META-INF/versions (multirelease jar)
-    implementation "org.jboss.resteasy:resteasy-jaxrs:4.0.0.Beta5"
-    implementation "org.jboss.resteasy:resteasy-undertow:4.0.0.Beta5"
+    implementation "org.jboss.resteasy:resteasy-core-spi:6.1.0.Final"
+    implementation "org.jboss.resteasy:resteasy-undertow:6.1.0.Final"
+    implementation "org.jboss.resteasy:resteasy-jackson2-provider:6.1.0.Final"
     implementation "javax.servlet:javax.servlet-api:3.0.1"
 
     implementation "io.undertow:undertow-core:2.2.17.Final"
@@ -158,11 +159,11 @@ jar {
     manifest {
         attributes([
                 "Specification-Title"     : "examplemod",
-                "Specification-Vendor"    : "examplemodsareus",
+                "Specification-Vendor"    : "Quarkiverse",
                 "Specification-Version"   : "1", // We are version 1 of ourselves
                 "Implementation-Title"    : project.name,
                 "Implementation-Version"  : project.jar.archiveVersion,
-                "Implementation-Vendor"   : "examplemodsareus",
+                "Implementation-Vendor"   : "Quarkiverse",
                 "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
