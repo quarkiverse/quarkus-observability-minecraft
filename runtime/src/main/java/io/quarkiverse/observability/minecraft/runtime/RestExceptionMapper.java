@@ -14,7 +14,6 @@ public class RestExceptionMapper
 
     @Override
     public Response toResponse(Exception e) {
-        e.printStackTrace();
 
         // Tactically suppress target resource exceptions
         // of the form jakarta.ws.rs.NotFoundException: Unable to find matching target resource method
