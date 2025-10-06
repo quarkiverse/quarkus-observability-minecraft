@@ -4,9 +4,9 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>io.quarkiverse</groupId>
-    <artifactId>quarkiverse-parent</artifactId>
-    <version>18</version>
+    <groupId>io.quarkiverse.observability.minecraft</groupId>
+    <artifactId>quarkus-observability-minecraft-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>quarkus-observability-minecraft-integration-tests</artifactId>
   <name>Quarkus Observability Using Minecraft - Integration Tests</name>
