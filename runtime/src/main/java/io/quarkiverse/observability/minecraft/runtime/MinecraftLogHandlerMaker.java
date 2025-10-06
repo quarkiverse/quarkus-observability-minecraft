@@ -1,11 +1,11 @@
 package io.quarkiverse.observability.minecraft.runtime;
 
+import java.util.Optional;
+import java.util.logging.Handler;
+
 import io.quarkus.arc.runtime.BeanContainer;
 import io.quarkus.runtime.RuntimeValue;
 import io.quarkus.runtime.annotations.Recorder;
-
-import java.util.Optional;
-import java.util.logging.Handler;
 
 @Recorder
 public class MinecraftLogHandlerMaker {
@@ -17,4 +17,3 @@ public class MinecraftLogHandlerMaker {
 
     }
 }
-

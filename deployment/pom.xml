@@ -73,26 +73,5 @@
         </plugins>
       </build>
     </profile>
-    <profile>
-      <id>prepareRelease-deployment</id>
-      <activation>
-        <property>
-          <name>prepareRelease</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>3.5.4</version>
-            <configuration>
-              <skipTests>true</skipTests>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
   </profiles>
 </project>
