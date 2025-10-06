@@ -1,5 +1,17 @@
 package com.example.examplemod;
 
+import static com.example.examplemod.EntityTypesInit.CRAB_ENTITY;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
+
+import com.google.gson.Gson;
+import com.mojang.authlib.minecraft.client.ObjectMapper;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
@@ -9,12 +21,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.NotNull;
-
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 /**
  * We need a wrapper here because we need something with a simple enough
@@ -25,12 +31,22 @@ import java.util.List;
 public class PlayerWrapper {
     public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
     private final Player player;
+    ObjectMapper objectMapper;
 
     PlayerWrapper(Player player) {
         this.player = player;
+        objectMapper = new ObjectMapper(new Gson());
+
     }
 
+    private static void makeLightning(Level world, Vec3 pos) {
+        LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(world);
+        lightning.setPos(pos);
+        lightning.setVisualOnly(true);
+        world.addFreshEntity(lightning);
+    }
 
+    // Called reflectively
     public void event(String message, String animalName) {
 
         Vec3 pos = getPositionInFrontOfPlayer(3);
@@ -39,10 +55,7 @@ public class PlayerWrapper {
 
         Level world = player.getCommandSenderWorld();
 
-        LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(world);
-        lightning.setPos(pos);
-        lightning.setVisualOnly(true);
-        world.addFreshEntity(lightning);
+        makeLightning(world, pos);
 
         Entity animal = getAnimalType(animalName).create(world);
         animal.setPos(pos);
@@ -51,6 +64,28 @@ public class PlayerWrapper {
         animal.setCustomName(timeComponent);
         animal.setCustomNameVisible(true);
         world.addFreshEntity(animal);
+    }
+
+    // Called reflectively
+    public void customEvent(String message, String animalJson) {
+
+        Vec3 pos = getPositionInFrontOfPlayer(3);
+
+        player.displayClientMessage(Component.literal(message), true);
+
+        Level world = player.getCommandSenderWorld();
+
+        makeLightning(world, pos);
+
+        WuffStuff wuffStuff = objectMapper.readValue(animalJson, WuffStuff.class);
+        Wuff animal = CRAB_ENTITY.get().create(world);
+        animal.setPos(pos);
+        animal.setWuffStuff(wuffStuff);
+        Component nameTag = Component.literal(wuffStuff.getName());
+        animal.setCustomName(nameTag);
+        animal.setCustomNameVisible(true);
+        world.addFreshEntity(animal);
+
     }
 
     private EntityType getAnimalType(String animalName) {
@@ -90,16 +125,14 @@ public class PlayerWrapper {
         player.sendSystemMessage(msg);
     }
 
-
     public void explode(String message, String ignored) {
         player.displayClientMessage(Component.literal(message), true);
         Level level = player.getCommandSenderWorld();
 
-        Entity animal = EntityType.WOLF.create(level);
+        Entity animal = EntityType.FROG.create(level);
         animal.setPos(getPositionInFrontOfPlayer(6));
         level.addFreshEntity(animal);
 
-        Vec3 blockPos = animal.getPosition(45);
         List<BlockPos> affectedPositions = new ArrayList();
         affectedPositions.add(new BlockPos(animal.getX(), animal.getY(),
                 animal.getZ()));
@@ -109,15 +142,14 @@ public class PlayerWrapper {
         explosion.explode();
     }
 
-
     @NotNull
     private Vec3 getPositionInFrontOfPlayer(int distance) {
         double x = player.getX() + distance * player.getLookAngle().x;
-        double y = player.getY() + distance * player.getLookAngle().y;
+        double y = player.getY() + distance; // Spawn at the same height as the player, but a bit up in the air
         double z = player.getZ() + distance * player.getLookAngle().z;
+
         Vec3 pos = new Vec3(x, y, z);
         return pos;
     }
-
 
 }

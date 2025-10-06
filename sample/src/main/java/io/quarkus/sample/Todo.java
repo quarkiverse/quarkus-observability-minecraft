@@ -1,11 +1,12 @@
 package io.quarkus.sample;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.NotBlank;
-import java.util.List;
+
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
 @Entity
 public class Todo extends PanacheEntity {
@@ -33,4 +34,7 @@ public class Todo extends PanacheEntity {
         return delete("completed", true);
     }
 
+    public String toString() {
+        return "<todo> " + title;
+    }
 }
