@@ -58,7 +58,6 @@ variable added to control that.
 ### Build the extension
 
 ```bash
-cd extension
 mvn install
 ```
 
