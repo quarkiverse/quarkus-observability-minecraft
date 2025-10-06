@@ -26,9 +26,9 @@ jobs:
         run: ./gradlew test
         working-directory: modded-minecraft
       - name: Build extension
-        run: mvn install -DskipTests=true
+        run: mvn install
       - name: Build todo app
-        run: mvn install  -DskipTests=true
+        run: mvn install
         working-directory: sample
       - uses: dineshsonachalam/markdown-autodocs@v1.0.7
         with:

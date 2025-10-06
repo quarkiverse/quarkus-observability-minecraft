@@ -9,10 +9,6 @@
 Both the extension and the Minecraft game itself need a Minecraft server to connect to. This extension provides a Dev
 Service which automatically builds a modded minecraft container and starts a modded server.
 
-> **_License note:_** The first time you start the Minecraft server you may have to accept the eula by changing
-`eula=false` to
-> `eula=true` in the file `modded-minecraft/run/eula.txt`
-
 ### Start the minecraft client
 
 There are two ways to do this:
@@ -24,6 +20,10 @@ the server. Make sure you are using *Java 17*. To launch the client, run
 cd modded-minecraft
 ./gradlew runClient
 ```
+
+> **_License note:_** The first time you start the Minecraft server you may have to accept the eula by changing
+`eula=false` to
+> `eula=true` in the file `modded-minecraft/run/eula.txt`
 
 Start a multiplayer game, and connect to `localhost:25565`.
 
@@ -58,11 +58,9 @@ a [longer video with voiceover](https://www.youtube.com/watch?v=w5SBQpAQ8m8).
 
 A more complete [demo script](demo-script.md) is also available.
 
-_Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft._
-
 ### Rebuild the minecraft server container
 
-The container runtime will cache images built by Testcontainers. To force a rebuild, run
+The maven module in the `modded-minecraft` directory will build a local container. Alternatively, you can run
 
 ```bash
 cd modded-minecraft
@@ -89,3 +87,7 @@ your [minecraft folder](https://gaming.stackexchange.com/questions/15664/can-i-a
 
 You will also need to remove the custom mod functionality from the server. This will need (todo!) an environment
 variable added to control that.
+
+---
+
+_Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft._
