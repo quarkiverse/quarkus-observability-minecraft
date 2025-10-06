@@ -51,7 +51,7 @@
     </plugins>
   </build>
   <profiles>
-    <!-- Disable tests on the release flows, since the build scripts will not have built the container first -->
+    <!-- Disable tests on the release flow, since the build scripts will not have built the container first -->
     <profile>
       <id>performRelease-deployment</id>
       <activation>
