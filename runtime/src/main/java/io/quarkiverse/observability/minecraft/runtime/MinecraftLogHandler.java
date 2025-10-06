@@ -31,4 +31,3 @@ public class MinecraftLogHandler extends Handler {
 
     }
 }
-

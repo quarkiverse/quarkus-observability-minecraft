@@ -7,22 +7,9 @@
 ## Quick start
 
 Both the extension and the Minecraft game itself need a Minecraft server to connect to. This extension provides a Dev
-Service which automatically starts a modded server in a container, but the container needs to be built first.
+Service which automatically builds a modded minecraft container and starts a modded server.
 
-### Build the minecraft server container
-
-```bash
-cd modded-minecraft
-podman build -t minecraft-server .
-```
-
-Accept the eula by changing eula=false to eula=true in the file `modded-minecraft/run/eula.txt`.
-
-The container build can be a bit slow the first time, be warned. If you're in a hurry, you can turn off dev services and
-use `./gradlew runServer` instead. If you'd like to test the built container, you can run
-`podman run -p 25565:25565 -p 8081:8081 minecraft-server.`
-
-> **_License note:_** The first time you start the Minecraft server you will have to accept the eula by changing
+> **_License note:_** The first time you start the Minecraft server you may have to accept the eula by changing
 `eula=false` to
 > `eula=true` in the file `modded-minecraft/run/eula.txt`
 
@@ -39,21 +26,6 @@ cd modded-minecraft
 ```
 
 Start a multiplayer game, and connect to `localhost:25565`.
-
-### Using the 'official' launcher and the Java edition of Minecraft
-
-You can also use the normal Minecraft launcher, but only if the client and server versions exactly match.
-Using the official client will allow graphical launch. You may need to set `online-mode` to true on the server, and get
-rid of a warning.
-
-If using the official client, which will be un-modded, you will need to configure the client to allow you to `alt-tab`
-away from the client without it pausing and bringing up
-a menu. Edit `options.txt` in
-your [minecraft folder](https://gaming.stackexchange.com/questions/15664/can-i-alt-tab-out-of-minecraft-without-the-game-auto-pausing)
-, and change `pauseOnLostFocus` to `false`.
-
-You will also need to remove the custom mod functionality from the server. This will need (todo!) an environment
-variable added to control that.
 
 ### Build the extension
 
@@ -87,3 +59,33 @@ a [longer video with voiceover](https://www.youtube.com/watch?v=w5SBQpAQ8m8).
 A more complete [demo script](demo-script.md) is also available.
 
 _Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft._
+
+### Rebuild the minecraft server container
+
+The container runtime will cache images built by Testcontainers. To force a rebuild, run
+
+```bash
+cd modded-minecraft
+podman build -t minecraft-server .
+```
+
+Accept the eula by changing eula=false to eula=true in the file `modded-minecraft/run/eula.txt`.
+
+The container build can be a bit slow the first time, be warned. If you're in a hurry, you can turn off dev services and
+use `./gradlew runServer` instead. If you'd like to test the built container, you can run
+`podman run -p 25565:25565 -p 8081:8081 minecraft-server.`
+
+### Using the 'official' launcher and the Java edition of Minecraft
+
+You can also use the normal Minecraft launcher, but only if the client and server versions exactly match.
+Using the official client will allow graphical launch. You may need to set `online-mode` to true on the server, and get
+rid of a warning.
+
+If using the official client, which will be un-modded, you will need to configure the client to allow you to `alt-tab`
+away from the client without it pausing and bringing up
+a menu. Edit `options.txt` in
+your [minecraft folder](https://gaming.stackexchange.com/questions/15664/can-i-alt-tab-out-of-minecraft-without-the-game-auto-pausing)
+, and change `pauseOnLostFocus` to `false`.
+
+You will also need to remove the custom mod functionality from the server. This will need (todo!) an environment
+variable added to control that.

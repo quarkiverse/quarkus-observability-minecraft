@@ -1,14 +1,14 @@
 package io.quarkiverse.observability.minecraft.runtime;
 
-import jakarta.interceptor.InterceptorBinding;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import jakarta.interceptor.InterceptorBinding;
+
 @InterceptorBinding
-@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.METHOD})
+@Target({ ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface MinecraftLog {
 }
