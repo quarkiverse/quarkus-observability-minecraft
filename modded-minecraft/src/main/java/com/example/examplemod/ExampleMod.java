@@ -52,7 +52,7 @@ public class ExampleMod {
 
         // Register ourselves for server and other game events we are interested in
         // Equivalent to MinecraftForge.EVENT_BUS.register(this), but honours SubscribeEvent annotations
-        // Register two different kinds of @SubscribeEvent listeners on the two different bus accessors 
+        // Register two different kinds of @SubscribeEvent listeners on the two different bus accessors
         bus.register(this);
         MinecraftForge.EVENT_BUS.register(new EventListener());
 
@@ -108,7 +108,7 @@ public class ExampleMod {
     }
 
     // There are two methods for registering listener classes, and the event types
-    // seem to differ between the two. 
+    // seem to differ between the two.
     public static class EventListener {
         private static final Logger LOGGER = LogUtils.getLogger();
 

@@ -13,6 +13,7 @@
   <packaging>pom</packaging>
   <name>Quarkus Observability Using Minecraft - Parent</name>
   <modules>
+    <module>modded-minecraft</module>
     <module>deployment</module>
     <module>runtime</module>
   </modules>
