@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import jakarta.inject.Singleton;
 
+import dev.langchain4j.exception.ModelNotFoundException;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.service.AiServices;
@@ -28,7 +29,14 @@ public class LLMWuffMaker implements EntityMaker {
             WuffStuff wuff = getMaker().createWuff(input);
             System.out.println("LLM generated " + wuff);
             return wuff;
+        } catch (ModelNotFoundException e) {
+            model = null;
+            maker = null;
+            e.printStackTrace();
+            return new WuffStuff("no " + config.name() + " model", "#666", Pattern.PLAIN, false, 0);
         } catch (Exception ee) {
+            model = null;
+            maker = null;
             ee.printStackTrace();
             return new WuffStuff("unparseable", "#444", Pattern.PLAIN, false, 0);
         }
