@@ -1,3 +1,6 @@
+Click 'd' to open the dev UI. Visit the Grafana dashboard, and then visit the Micrometer Prometheus Registry.
+Hit the main app a few times, to generate load.
+
 Create a duplicate item. That should trigger an exception.
 
 Open the application properties and change the animal type.
