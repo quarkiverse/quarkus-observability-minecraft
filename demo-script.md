@@ -1,3 +1,6 @@
+Use option-drag to tile the minecraft app window, and also the browser window.
+If you forget, use `esc` to suspend the game while you arrange the window.
+
 Click 'd' to open the dev UI. Visit the Grafana dashboard, and then visit the Micrometer Prometheus Registry.
 Hit the main app a few times, to generate load.
 
