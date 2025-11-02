@@ -3,6 +3,8 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 git apply $SCRIPT_DIR/demo-prep.patch
 
+idea $SCRIPT_DIR/..
+
+# This has to run last because runClient never terminates and running it in the background doesn't release the control flow
 (cd $SCRIPT_DIR/../modded-minecraft/ && ./gradlew runClient & )
 
-idea $SCRIPT_DIR/..
