@@ -1,12 +1,13 @@
 package io.quarkus.sample;
 
-import io.quarkus.logging.Log;
+import java.net.URI;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
-import java.net.URI;
+
+import io.quarkus.logging.Log;
 
 @Path("/")
 public class IndexResource {

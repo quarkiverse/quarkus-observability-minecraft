@@ -1,14 +1,14 @@
 package io.quarkus.sample;
 
-import io.quarkus.panache.common.Sort;
+import java.util.List;
 
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
-import java.util.List;
 
+import io.quarkus.panache.common.Sort;
 
 @Path("/api")
 @Produces("application/json")

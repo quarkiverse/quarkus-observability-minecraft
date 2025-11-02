@@ -1,22 +1,24 @@
 package io.quarkus.sample;
 
-import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.common.mapper.TypeRef;
+import static io.restassured.RestAssured.delete;
+import static io.restassured.RestAssured.get;
+import static io.restassured.RestAssured.given;
+import static junit.framework.TestCase.assertEquals;
+import static org.hamcrest.core.Is.is;
+
+import java.util.List;
+
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MediaType;
-import java.util.List;
-
-import static io.restassured.RestAssured.delete;
-import static io.restassured.RestAssured.get;
-import static io.restassured.RestAssured.given;
-import static junit.framework.TestCase.assertEquals;
-import static org.hamcrest.core.Is.is;
+import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.common.mapper.TypeRef;
 
 @QuarkusTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
