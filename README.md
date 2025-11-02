@@ -56,7 +56,8 @@ a [longer video with voiceover](https://www.youtube.com/watch?v=w5SBQpAQ8m8).
 
 [![a youtube title screen](images/youtubethumbnail.png)](https://www.youtube.com/watch?v=w5SBQpAQ8m8)
 
-A more complete [demo script](demo-script.md) is also available.
+A more complete [demo s
+cript](demo-script.md) is also available.
 
 ### Rebuild the minecraft server container
 
