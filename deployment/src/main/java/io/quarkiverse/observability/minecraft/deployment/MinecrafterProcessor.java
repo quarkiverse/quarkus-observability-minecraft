@@ -15,7 +15,6 @@ import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.arc.deployment.AnnotationsTransformerBuildItem;
 import io.quarkus.arc.deployment.BeanContainerBuildItem;
 import io.quarkus.arc.processor.AnnotationsTransformer;
-import io.quarkus.deployment.Feature;
 import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
@@ -98,9 +97,8 @@ class MinecrafterProcessor {
 
         final int minecraftApiPort = 8081;
 
-        // TODO this is the wrong feature name; a feature must be set, but to do it properly needs https://github.com/quarkusio/quarkus/pull/50270
         return DevServicesResultBuildItem.owned()
-                .feature(Feature.OBSERVABILITY)
+                .name("quarkus-minecraft")
                 .serviceName(FEATURE)
                 .startable(() -> new MinecraftContainer(minecraftApiPort))
                 .configProvider(Map.of("quarkus.minecrafter.base-url",
