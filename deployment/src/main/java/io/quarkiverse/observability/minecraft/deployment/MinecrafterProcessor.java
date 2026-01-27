@@ -98,8 +98,7 @@ class MinecrafterProcessor {
         final int minecraftApiPort = 8081;
 
         return DevServicesResultBuildItem.owned()
-                .name("quarkus-minecraft")
-                .serviceName(FEATURE)
+                .feature(FEATURE)
                 .startable(() -> new MinecraftContainer(minecraftApiPort))
                 .configProvider(Map.of("quarkus.minecrafter.base-url",
                         c -> "http://" + c.getHost() + ":" + c.getMappedPort(minecraftApiPort)))
