@@ -15,6 +15,7 @@ import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.arc.deployment.AnnotationsTransformerBuildItem;
 import io.quarkus.arc.deployment.BeanContainerBuildItem;
 import io.quarkus.arc.processor.AnnotationsTransformer;
+import io.quarkus.deployment.IsLocalDevelopment;
 import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
@@ -23,6 +24,7 @@ import io.quarkus.deployment.builditem.DevServicesResultBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.LogHandlerBuildItem;
 import io.quarkus.deployment.dev.devservices.DevServicesConfig;
+import io.quarkus.devui.spi.page.CardPageBuildItem;
 import io.quarkus.resteasy.reactive.spi.ExceptionMapperBuildItem;
 
 class MinecrafterProcessor {
@@ -84,6 +86,15 @@ class MinecrafterProcessor {
                 }
             }
         });
+    }
+
+    @BuildStep(onlyIf = IsLocalDevelopment.class)
+    void createMinecraftPageOnCard(BuildProducer<CardPageBuildItem> cardsProducer) {
+
+        CardPageBuildItem cardPageBuildItem = new CardPageBuildItem();
+        cardPageBuildItem.setLogo("dark-chicken.png", "chicken.png");
+
+        cardsProducer.produce(cardPageBuildItem);
     }
 
     @BuildStep
