@@ -15,6 +15,7 @@
     <module>modded-minecraft</module>
     <module>deployment</module>
     <module>runtime</module>
+    <module>sample</module>
   </modules>
   <properties>
     <compiler-plugin.version>3.12.1</compiler-plugin.version>
