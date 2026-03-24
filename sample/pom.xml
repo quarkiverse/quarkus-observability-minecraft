@@ -11,8 +11,9 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <groupId>io.quarkus.sample</groupId>
+  <groupId>io.quarkiverse.minecraft.sample</groupId>
   <artifactId>sample</artifactId>
+  <name>Sample Application for Observability using Minecraft</name>
 
   <properties>
     <maven.compiler.parameters>true</maven.compiler.parameters>
