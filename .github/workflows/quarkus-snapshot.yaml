@@ -16,5 +16,5 @@ jobs:
     uses: quarkiverse/.github/.github/workflows/quarkus-ecosystem-ci.yml@main
     secrets: inherit
     with:
-      ecosystem_ci_repo_path: quarkiverse-pact
+      ecosystem_ci_repo_path: quarkiverse-observability-minecraft
       java_version: 17
