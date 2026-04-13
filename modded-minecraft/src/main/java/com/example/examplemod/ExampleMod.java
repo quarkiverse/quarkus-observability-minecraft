@@ -129,10 +129,14 @@ public class ExampleMod {
             System.out.println("QUARKCRAFT - Client connected: " + player);
             player.displayClientMessage(Component.literal("Hello from the Quarkiverse!"), true);
 
-            PlayerWrapper playerWrapper = new PlayerWrapper(player);
+            Endpoint.setPlayer(new PlayerWrapper(player));
+        }
 
-            Endpoint.setPlayer(playerWrapper);
-
+        @SubscribeEvent
+        public void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+            // Respawn creates a new ServerPlayer; update the reference so
+            // subsequent calls (events, explosions, etc.) target the live player.
+            Endpoint.setPlayer(new PlayerWrapper(event.getEntity()));
         }
 
     }
