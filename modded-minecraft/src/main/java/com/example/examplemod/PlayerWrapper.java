@@ -14,12 +14,16 @@ import com.mojang.authlib.minecraft.client.ObjectMapper;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -39,7 +43,7 @@ public class PlayerWrapper {
 
     }
 
-    private static void makeLightning(Level world, Vec3 pos) {
+    private static void makeLightning(ServerLevel world, Vec3 pos) {
         LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(world);
         lightning.setPos(pos);
         lightning.setVisualOnly(true);
@@ -48,44 +52,47 @@ public class PlayerWrapper {
 
     // Called reflectively
     public void event(String message, String animalName) {
-
-        Vec3 pos = getPositionInFrontOfPlayer(3);
-
         player.displayClientMessage(Component.literal(message), true);
 
         Level world = player.getCommandSenderWorld();
+        if (world instanceof ServerLevel serverLevel) {
+            // Must run on the server thread — this method is called from an
+            // Undertow HTTP thread, and addFreshEntity is not thread-safe.
+            serverLevel.getServer().execute(() -> {
+                Vec3 pos = getPositionInFrontOfPlayer(3);
 
-        makeLightning(world, pos);
+                makeLightning(serverLevel, pos);
 
-        Entity animal = getAnimalType(animalName).create(world);
-        animal.setPos(pos);
-        String time = DATE_FORMAT.format(new Date());
-        Component timeComponent = Component.literal(time);
-        animal.setCustomName(timeComponent);
-        animal.setCustomNameVisible(true);
-        world.addFreshEntity(animal);
+                Entity animal = getAnimalType(animalName).create(serverLevel);
+                animal.setPos(pos);
+                String time = DATE_FORMAT.format(new Date());
+                animal.setCustomName(Component.literal(time));
+                animal.setCustomNameVisible(true);
+                serverLevel.addFreshEntity(animal);
+            });
+        }
     }
 
     // Called reflectively
     public void customEvent(String message, String animalJson) {
-
-        Vec3 pos = getPositionInFrontOfPlayer(3);
-
         player.displayClientMessage(Component.literal(message), true);
 
         Level world = player.getCommandSenderWorld();
+        if (world instanceof ServerLevel serverLevel) {
+            serverLevel.getServer().execute(() -> {
+                Vec3 pos = getPositionInFrontOfPlayer(3);
 
-        makeLightning(world, pos);
+                makeLightning(serverLevel, pos);
 
-        WuffStuff wuffStuff = objectMapper.readValue(animalJson, WuffStuff.class);
-        Wuff animal = CRAB_ENTITY.get().create(world);
-        animal.setPos(pos);
-        animal.setWuffStuff(wuffStuff);
-        Component nameTag = Component.literal(wuffStuff.getName());
-        animal.setCustomName(nameTag);
-        animal.setCustomNameVisible(true);
-        world.addFreshEntity(animal);
-
+                WuffStuff wuffStuff = objectMapper.readValue(animalJson, WuffStuff.class);
+                Wuff animal = CRAB_ENTITY.get().create(serverLevel);
+                animal.setPos(pos);
+                animal.setWuffStuff(wuffStuff);
+                animal.setCustomName(Component.literal(wuffStuff.getName()));
+                animal.setCustomNameVisible(true);
+                serverLevel.addFreshEntity(animal);
+            });
+        }
     }
 
     private EntityType getAnimalType(String animalName) {
@@ -129,17 +136,97 @@ public class PlayerWrapper {
         player.displayClientMessage(Component.literal(message), true);
         Level level = player.getCommandSenderWorld();
 
-        Entity animal = EntityType.FROG.create(level);
-        animal.setPos(getPositionInFrontOfPlayer(6));
-        level.addFreshEntity(animal);
+        if (level instanceof ServerLevel serverLevel) {
+            serverLevel.getServer().execute(() -> {
+                Entity animal = EntityType.FROG.create(serverLevel);
+                animal.setPos(getPositionInFrontOfPlayer(6));
+                serverLevel.addFreshEntity(animal);
 
-        List<BlockPos> affectedPositions = new ArrayList();
-        affectedPositions.add(new BlockPos(animal.getX(), animal.getY(),
-                animal.getZ()));
-        Explosion explosion = new Explosion(level, animal, animal.getX(), animal.getY(),
-                animal.getZ(), 6F, affectedPositions);
+                List<BlockPos> affectedPositions = new ArrayList<>();
+                affectedPositions.add(new BlockPos(animal.getX(), animal.getY(),
+                        animal.getZ()));
+                Explosion explosion = new Explosion(serverLevel, animal, animal.getX(), animal.getY(),
+                        animal.getZ(), 6F, affectedPositions);
 
-        explosion.explode();
+                explosion.explode();
+            });
+        }
+    }
+
+    public void setRespawn(String message, String ignored) {
+        player.displayClientMessage(Component.literal(message), true);
+
+        Level level = player.getLevel();
+        if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
+            // Pick a random direction and go 300-500 blocks away
+            double angle = Math.random() * 2 * Math.PI;
+            int distance = 300 + (int) (Math.random() * 200);
+            int targetX = (int) (player.getX() + Math.cos(angle) * distance);
+            int targetZ = (int) (player.getZ() + Math.sin(angle) * distance);
+
+            // Must run on the server thread — this method is called from an
+            // Undertow HTTP thread, and setRespawnPosition must be visible to
+            // the death/respawn processing that happens later.
+            serverLevel.getServer().execute(() -> {
+                // Force the target chunk to load so terrain is generated and
+                // the heightmap is available — avoids crashes from unknown chunks
+                serverLevel.getChunk(targetX >> 4, targetZ >> 4);
+
+                // Find a safe surface Y using the heightmap, then scan upward
+                // until we find two clear blocks for the player to stand in.
+                // Minecraft's respawn logic rejects positions without headroom.
+                int y = serverLevel.getHeight(Heightmap.Types.MOTION_BLOCKING, targetX, targetZ);
+                while (y < serverLevel.getMaxBuildHeight() - 1
+                        && (!serverLevel.getBlockState(new BlockPos(targetX, y, targetZ))
+                                .getCollisionShape(serverLevel, new BlockPos(targetX, y, targetZ)).isEmpty()
+                                || !serverLevel.getBlockState(new BlockPos(targetX, y + 1, targetZ))
+                                        .getCollisionShape(serverLevel, new BlockPos(targetX, y + 1, targetZ)).isEmpty())) {
+                    y++;
+                }
+                BlockPos spawnPosition = new BlockPos(targetX, y, targetZ);
+
+                serverPlayer.setRespawnPosition(
+                        serverLevel.dimension(),
+                        spawnPosition,
+                        0.0F,
+                        true,
+                        false);
+
+                player.displayClientMessage(
+                        Component.literal("Respawn set " + distance + " blocks away at: " + spawnPosition.toShortString()),
+                        false);
+            });
+        }
+    }
+
+    public void killPlayer(String message, String ignored) {
+        player.displayClientMessage(Component.literal(message), true);
+
+        Level level = player.getLevel();
+        if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
+            // Must run on the server thread — Minecraft ignores death
+            // processing off-thread.
+            serverLevel.getServer().execute(() -> {
+                if (serverPlayer.isAlive()) {
+                    serverPlayer.kill();
+                }
+            });
+        }
+    }
+
+    public void respawnPlayer(String message, String ignored) {
+        Level level = player.getLevel();
+        if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
+            serverLevel.getServer().execute(() -> {
+                if (!serverPlayer.isAlive()) {
+                    PlayerList playerList = serverPlayer.server.getPlayerList();
+                    ServerPlayer newPlayer = playerList.respawn(serverPlayer, false);
+                    // respawn() creates a new ServerPlayer; update the reference
+                    // so subsequent calls operate on the live player.
+                    Endpoint.setPlayer(new PlayerWrapper(newPlayer));
+                }
+            });
+        }
     }
 
     @NotNull
