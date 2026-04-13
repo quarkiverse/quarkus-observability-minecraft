@@ -39,6 +39,21 @@ public class MinecraftService {
         invokeMinecraft("boom");
     }
 
+    public String setRespawn() {
+        invokeMinecraft("set-respawn");
+        return "Respawn point set to a new location";
+    }
+
+    public String killPlayer() {
+        invokeMinecraft("kill");
+        return "Killing player to trigger respawn";
+    }
+
+    public String respawnPlayer() {
+        invokeMinecraft("respawn");
+        return "Respawning player at new location";
+    }
+
     public void log(String message) {
         try {
             client.target(minecrafterConfig.baseURL())
