@@ -15,6 +15,7 @@ import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.arc.deployment.AnnotationsTransformerBuildItem;
 import io.quarkus.arc.deployment.BeanContainerBuildItem;
 import io.quarkus.arc.processor.AnnotationsTransformer;
+import io.quarkus.deployment.IsDevelopment;
 import io.quarkus.deployment.IsLocalDevelopment;
 import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildProducer;
@@ -24,7 +25,9 @@ import io.quarkus.deployment.builditem.DevServicesResultBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.LogHandlerBuildItem;
 import io.quarkus.deployment.dev.devservices.DevServicesConfig;
+import io.quarkus.devui.spi.JsonRPCProvidersBuildItem;
 import io.quarkus.devui.spi.page.CardPageBuildItem;
+import io.quarkus.devui.spi.page.Page;
 import io.quarkus.resteasy.reactive.spi.ExceptionMapperBuildItem;
 
 class MinecrafterProcessor {
@@ -92,6 +95,13 @@ class MinecrafterProcessor {
     void createMinecraftPageOnCard(BuildProducer<CardPageBuildItem> cardsProducer) {
 
         CardPageBuildItem cardPageBuildItem = new CardPageBuildItem();
+
+        cardPageBuildItem.addPage(Page
+                .webComponentPageBuilder()
+                .title("Game controls")
+                .icon("font-awesome-solid:gamepad")
+                .componentLink("qwc-minecraft-respawn.js"));
+
         cardPageBuildItem.setLogo("dark-chicken.png", "chicken.png");
 
         cardsProducer.produce(cardPageBuildItem);
@@ -115,5 +125,10 @@ class MinecrafterProcessor {
                         c -> "http://" + c.getHost() + ":" + c.getMappedPort(minecraftApiPort)))
                 .build();
 
+    }
+
+    @BuildStep(onlyIf = IsDevelopment.class)
+    JsonRPCProvidersBuildItem createJsonRPCService() {
+        return new JsonRPCProvidersBuildItem(MinecraftService.class);
     }
 }
