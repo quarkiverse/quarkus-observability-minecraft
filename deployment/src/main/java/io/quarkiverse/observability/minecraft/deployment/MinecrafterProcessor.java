@@ -95,7 +95,6 @@ class MinecrafterProcessor {
     void createMinecraftPageOnCard(BuildProducer<CardPageBuildItem> cardsProducer) {
 
         CardPageBuildItem cardPageBuildItem = new CardPageBuildItem();
-        cardPageBuildItem.addBuildTimeData("title", "Minecraft Controls");
 
         cardPageBuildItem.addPage(Page
                 .webComponentPageBuilder()
