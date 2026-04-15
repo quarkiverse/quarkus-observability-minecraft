@@ -27,7 +27,6 @@ public class Endpoint {
     @POST
     @Path("/event-with-details")
     @Consumes("application/json")
-    //    @Produces("text/plain")
     public String alert(String config) {
         System.out.println("[Quarkcraft] " + config);
         String name = invokeOnPlayer("customEvent", "A thing happened out in the real world",

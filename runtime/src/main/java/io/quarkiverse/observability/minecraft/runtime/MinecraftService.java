@@ -80,7 +80,7 @@ public class MinecraftService {
         try {
             String response = client.target(minecrafterConfig.baseURL())
                     .path("observability/" + path)
-                    .request(MediaType.APPLICATION_JSON)
+                    .request(MediaType.TEXT_PLAIN)
                     .post(Entity.json(body))
                     .readEntity(String.class);
 
