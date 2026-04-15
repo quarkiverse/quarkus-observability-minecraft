@@ -9,8 +9,6 @@ import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 
-import io.quarkiverse.observability.minecraft.runtime.ai.WuffStuff;
-
 @Singleton
 public class MinecraftService {
 
@@ -40,7 +38,7 @@ public class MinecraftService {
     }
 
     public String setRespawn() {
-        invokeMinecraft("set-respawn");
+        invokeMinecraft("set-respawn", String.valueOf(minecrafterConfig.allowRespawnOverWater()));
         return "Respawn point set to a new location";
     }
 
@@ -70,30 +68,20 @@ public class MinecraftService {
         executor.submit(() -> invokeMinecraftSynchronously(path));
     }
 
-    private void invokeMinecraft(String path, WuffStuff wuffStuff) {
-        executor.submit(() -> invokeMinecraftSynchronously(path, wuffStuff));
+    private void invokeMinecraft(String path, Object body) {
+        executor.submit(() -> invokeMinecraftSynchronously(path, body));
     }
 
     private void invokeMinecraftSynchronously(String path) {
-        try {
-            String response = client.target(minecrafterConfig.baseURL())
-                    .path("observability/" + path)
-                    .request(MediaType.TEXT_PLAIN)
-                    .post(Entity.text(minecrafterConfig.animalType()))
-                    .readEntity(String.class);
-
-            System.out.println("\uD83D\uDDE1️ [Minecrafter] Mod response: " + response);
-        } catch (Throwable e) {
-            System.out.println("\uD83D\uDDE1️ [Minecrafter] Connection error: " + e);
-        }
+        invokeMinecraftSynchronously(path, minecrafterConfig.animalType());
     }
 
-    private void invokeMinecraftSynchronously(String path, WuffStuff stuff) {
+    private void invokeMinecraftSynchronously(String path, Object body) {
         try {
             String response = client.target(minecrafterConfig.baseURL())
                     .path("observability/" + path)
                     .request(MediaType.APPLICATION_JSON)
-                    .post(Entity.json(stuff))
+                    .post(Entity.json(body))
                     .readEntity(String.class);
 
             System.out.println("\uD83D\uDDE1️ [Minecrafter] Mod response: " + response);

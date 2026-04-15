@@ -38,7 +38,7 @@ public class Endpoint {
 
     @POST
     @Path("/event")
-    @Consumes("text/plain")
+    @Consumes("application/json")
     public String simpleAlert(String type) {
         System.out.println("[Quarkcraft] event" + type);
         return invokeOnPlayer("event", "A thing happened out in the real world", type);
@@ -54,9 +54,10 @@ public class Endpoint {
 
     @POST
     @Path("/set-respawn")
-    public String setRespawn() {
+    @Consumes("application/json")
+    public String setRespawn(String config) {
         System.out.println("[Quarkcraft] set-respawn");
-        return invokeOnPlayer("setRespawn", "Respawn point updated", null);
+        return invokeOnPlayer("setRespawn", "Respawn point updated", config);
     }
 
     @POST

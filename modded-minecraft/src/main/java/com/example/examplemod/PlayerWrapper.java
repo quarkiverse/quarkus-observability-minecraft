@@ -33,6 +33,7 @@ import net.minecraft.world.phys.Vec3;
  * invoke the method by reflection.
  */
 public class PlayerWrapper {
+    private static final int MAX_RESPAWN_ATTEMPTS = 20;
     public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
     private final Player player;
     ObjectMapper objectMapper;
@@ -153,37 +154,55 @@ public class PlayerWrapper {
         }
     }
 
-    public void setRespawn(String message, String ignored) {
+    public void setRespawn(String message, String config) {
+        boolean allowWater = Boolean.parseBoolean(config);
         player.displayClientMessage(Component.literal(message), true);
 
         Level level = player.getLevel();
         if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
-            // Pick a random direction and go 300-500 blocks away
-            double angle = Math.random() * 2 * Math.PI;
-            int distance = 300 + (int) (Math.random() * 200);
-            int targetX = (int) (player.getX() + Math.cos(angle) * distance);
-            int targetZ = (int) (player.getZ() + Math.sin(angle) * distance);
-
             // Must run on the server thread — this method is called from an
             // Undertow HTTP thread, and setRespawnPosition must be visible to
             // the death/respawn processing that happens later.
             serverLevel.getServer().execute(() -> {
-                // Force the target chunk to load so terrain is generated and
-                // the heightmap is available — avoids crashes from unknown chunks
-                serverLevel.getChunk(targetX >> 4, targetZ >> 4);
+                // Skip retries when water is acceptable
+                int maxAttempts = allowWater ? 1 : MAX_RESPAWN_ATTEMPTS;
+                BlockPos spawnPosition = null;
+                int chosenDistance = 0;
+                boolean isWater = false;
 
-                // Find a safe surface Y using the heightmap, then scan upward
-                // until we find two clear blocks for the player to stand in.
-                // Minecraft's respawn logic rejects positions without headroom.
-                int y = serverLevel.getHeight(Heightmap.Types.MOTION_BLOCKING, targetX, targetZ);
-                while (y < serverLevel.getMaxBuildHeight() - 1
-                        && (!serverLevel.getBlockState(new BlockPos(targetX, y, targetZ))
-                                .getCollisionShape(serverLevel, new BlockPos(targetX, y, targetZ)).isEmpty()
-                                || !serverLevel.getBlockState(new BlockPos(targetX, y + 1, targetZ))
-                                        .getCollisionShape(serverLevel, new BlockPos(targetX, y + 1, targetZ)).isEmpty())) {
-                    y++;
+                for (int attempt = 0; attempt < maxAttempts; attempt++) {
+                    // Pick a random direction and go 300-500 blocks away
+                    double angle = Math.random() * 2 * Math.PI;
+                    int distance = 300 + (int) (Math.random() * 200);
+                    int targetX = (int) (player.getX() + Math.cos(angle) * distance);
+                    int targetZ = (int) (player.getZ() + Math.sin(angle) * distance);
+
+                    // Force the target chunk to load so terrain is generated and
+                    // the heightmap is available — avoids crashes from unknown chunks
+                    serverLevel.getChunk(targetX >> 4, targetZ >> 4);
+
+                    // Find a safe surface Y using the heightmap, then scan upward
+                    // until we find two clear blocks for the player to stand in.
+                    // Minecraft's respawn logic rejects positions without headroom.
+                    int y = serverLevel.getHeight(Heightmap.Types.MOTION_BLOCKING, targetX, targetZ);
+                    while (y < serverLevel.getMaxBuildHeight() - 1
+                            && (!serverLevel.getBlockState(new BlockPos(targetX, y, targetZ))
+                                    .getCollisionShape(serverLevel, new BlockPos(targetX, y, targetZ)).isEmpty()
+                                    || !serverLevel.getBlockState(new BlockPos(targetX, y + 1, targetZ))
+                                            .getCollisionShape(serverLevel, new BlockPos(targetX, y + 1, targetZ))
+                                            .isEmpty())) {
+                        y++;
+                    }
+
+                    spawnPosition = new BlockPos(targetX, y, targetZ);
+                    chosenDistance = distance;
+
+                    isWater = !serverLevel.getBlockState(new BlockPos(targetX, y - 1, targetZ)).getFluidState()
+                            .isEmpty();
+                    if (allowWater || !isWater) {
+                        break;
+                    }
                 }
-                BlockPos spawnPosition = new BlockPos(targetX, y, targetZ);
 
                 serverPlayer.setRespawnPosition(
                         serverLevel.dimension(),
@@ -192,8 +211,16 @@ public class PlayerWrapper {
                         true,
                         false);
 
+                String biome = serverLevel.getBiome(spawnPosition).unwrapKey()
+                        .map(key -> key.location().getPath())
+                        .orElse("unknown");
+                String warning = isWater
+                        ? " (no dry land found after " + MAX_RESPAWN_ATTEMPTS + " attempts — respawn is over water)"
+                        : "";
                 player.displayClientMessage(
-                        Component.literal("Respawn set " + distance + " blocks away at: " + spawnPosition.toShortString()),
+                        Component.literal(
+                                "Respawn set " + chosenDistance + " blocks away in " + biome + " at: "
+                                        + spawnPosition.toShortString() + warning),
                         false);
             });
         }
