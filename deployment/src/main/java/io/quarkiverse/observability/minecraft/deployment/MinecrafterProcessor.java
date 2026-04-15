@@ -114,13 +114,13 @@ class MinecrafterProcessor {
     }
 
     @BuildStep(onlyIfNot = IsNormal.class, onlyIf = DevServicesConfig.Enabled.class)
-    public DevServicesResultBuildItem createContainer() {
+    public DevServicesResultBuildItem createContainer(MinecrafterDevServicesConfig config) {
 
         final int minecraftApiPort = 8081;
 
         return DevServicesResultBuildItem.owned()
                 .feature(FEATURE)
-                .startable(() -> new MinecraftContainer(minecraftApiPort))
+                .startable(() -> new MinecraftContainer(minecraftApiPort, config.devservices().port()))
                 .configProvider(Map.of("quarkus.minecrafter.base-url",
                         c -> "http://" + c.getHost() + ":" + c.getMappedPort(minecraftApiPort)))
                 .build();
