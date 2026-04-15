@@ -6,6 +6,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +46,25 @@ public class PlayerWrapper {
 
     }
 
+    /**
+     * Run an action on the server thread. Methods in this class are called
+     * from Undertow HTTP threads, but most Minecraft operations (spawning
+     * entities, killing players, etc.) are not thread-safe.
+     */
+    private void runOnServerThread(Consumer<ServerLevel> action) {
+        Level level = player.getCommandSenderWorld();
+        if (level instanceof ServerLevel serverLevel) {
+            serverLevel.getServer().execute(() -> action.accept(serverLevel));
+        }
+    }
+
+    private void runOnServerThread(BiConsumer<ServerLevel, ServerPlayer> action) {
+        Level level = player.getLevel();
+        if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
+            serverLevel.getServer().execute(() -> action.accept(serverLevel, serverPlayer));
+        }
+    }
+
     private static void makeLightning(ServerLevel world, Vec3 pos) {
         LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(world);
         lightning.setPos(pos);
@@ -55,45 +76,37 @@ public class PlayerWrapper {
     public void event(String message, String animalName) {
         player.displayClientMessage(Component.literal(message), true);
 
-        Level world = player.getCommandSenderWorld();
-        if (world instanceof ServerLevel serverLevel) {
-            // Must run on the server thread — this method is called from an
-            // Undertow HTTP thread, and addFreshEntity is not thread-safe.
-            serverLevel.getServer().execute(() -> {
-                Vec3 pos = getPositionInFrontOfPlayer(3);
+        runOnServerThread(serverLevel -> {
+            Vec3 pos = getPositionInFrontOfPlayer(3);
 
-                makeLightning(serverLevel, pos);
+            makeLightning(serverLevel, pos);
 
-                Entity animal = getAnimalType(animalName).create(serverLevel);
-                animal.setPos(pos);
-                String time = DATE_FORMAT.format(new Date());
-                animal.setCustomName(Component.literal(time));
-                animal.setCustomNameVisible(true);
-                serverLevel.addFreshEntity(animal);
-            });
-        }
+            Entity animal = getAnimalType(animalName).create(serverLevel);
+            animal.setPos(pos);
+            String time = DATE_FORMAT.format(new Date());
+            animal.setCustomName(Component.literal(time));
+            animal.setCustomNameVisible(true);
+            serverLevel.addFreshEntity(animal);
+        });
     }
 
     // Called reflectively
     public void customEvent(String message, String animalJson) {
         player.displayClientMessage(Component.literal(message), true);
 
-        Level world = player.getCommandSenderWorld();
-        if (world instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().execute(() -> {
-                Vec3 pos = getPositionInFrontOfPlayer(3);
+        runOnServerThread(serverLevel -> {
+            Vec3 pos = getPositionInFrontOfPlayer(3);
 
-                makeLightning(serverLevel, pos);
+            makeLightning(serverLevel, pos);
 
-                WuffStuff wuffStuff = objectMapper.readValue(animalJson, WuffStuff.class);
-                Wuff animal = CRAB_ENTITY.get().create(serverLevel);
-                animal.setPos(pos);
-                animal.setWuffStuff(wuffStuff);
-                animal.setCustomName(Component.literal(wuffStuff.getName()));
-                animal.setCustomNameVisible(true);
-                serverLevel.addFreshEntity(animal);
-            });
-        }
+            WuffStuff wuffStuff = objectMapper.readValue(animalJson, WuffStuff.class);
+            Wuff animal = CRAB_ENTITY.get().create(serverLevel);
+            animal.setPos(pos);
+            animal.setWuffStuff(wuffStuff);
+            animal.setCustomName(Component.literal(wuffStuff.getName()));
+            animal.setCustomNameVisible(true);
+            serverLevel.addFreshEntity(animal);
+        });
     }
 
     private EntityType getAnimalType(String animalName) {
@@ -129,131 +142,116 @@ public class PlayerWrapper {
 
     public void say(String message, String ignored) {
         // Use the chat interface for logs since it wraps more nicely
-        Component msg = Component.literal(message);
-        player.sendSystemMessage(msg);
+        runOnServerThread(serverLevel -> {
+            Component msg = Component.literal(message);
+            player.sendSystemMessage(msg);
+        });
     }
 
     public void explode(String message, String ignored) {
         player.displayClientMessage(Component.literal(message), true);
-        Level level = player.getCommandSenderWorld();
 
-        if (level instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().execute(() -> {
-                Entity animal = EntityType.FROG.create(serverLevel);
-                animal.setPos(getPositionInFrontOfPlayer(6));
-                serverLevel.addFreshEntity(animal);
+        runOnServerThread(serverLevel -> {
+            Entity animal = EntityType.FROG.create(serverLevel);
+            animal.setPos(getPositionInFrontOfPlayer(6));
+            serverLevel.addFreshEntity(animal);
 
-                List<BlockPos> affectedPositions = new ArrayList<>();
-                affectedPositions.add(new BlockPos(animal.getX(), animal.getY(),
-                        animal.getZ()));
-                Explosion explosion = new Explosion(serverLevel, animal, animal.getX(), animal.getY(),
-                        animal.getZ(), 6F, affectedPositions);
+            List<BlockPos> affectedPositions = new ArrayList<>();
+            affectedPositions.add(new BlockPos(animal.getX(), animal.getY(),
+                    animal.getZ()));
+            Explosion explosion = new Explosion(serverLevel, animal, animal.getX(), animal.getY(),
+                    animal.getZ(), 6F, affectedPositions);
 
-                explosion.explode();
-            });
-        }
+            explosion.explode();
+        });
     }
 
     public void setRespawn(String message, String config) {
         boolean allowWater = Boolean.parseBoolean(config);
         player.displayClientMessage(Component.literal(message), true);
 
-        Level level = player.getLevel();
-        if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
-            // Must run on the server thread — this method is called from an
-            // Undertow HTTP thread, and setRespawnPosition must be visible to
-            // the death/respawn processing that happens later.
-            serverLevel.getServer().execute(() -> {
-                // Skip retries when water is acceptable
-                int maxAttempts = allowWater ? 1 : MAX_RESPAWN_ATTEMPTS;
-                BlockPos spawnPosition = null;
-                int chosenDistance = 0;
-                boolean isWater = false;
+        runOnServerThread((serverLevel, serverPlayer) -> {
+            // Skip retries when water is acceptable
+            int maxAttempts = allowWater ? 1 : MAX_RESPAWN_ATTEMPTS;
+            BlockPos spawnPosition = null;
+            int chosenDistance = 0;
+            boolean isWater = false;
 
-                for (int attempt = 0; attempt < maxAttempts; attempt++) {
-                    // Pick a random direction and go 300-500 blocks away
-                    double angle = Math.random() * 2 * Math.PI;
-                    int distance = 300 + (int) (Math.random() * 200);
-                    int targetX = (int) (player.getX() + Math.cos(angle) * distance);
-                    int targetZ = (int) (player.getZ() + Math.sin(angle) * distance);
+            for (int attempt = 0; attempt < maxAttempts; attempt++) {
+                // Pick a random direction and go 300-500 blocks away
+                double angle = Math.random() * 2 * Math.PI;
+                int distance = 300 + (int) (Math.random() * 200);
+                int targetX = (int) (player.getX() + Math.cos(angle) * distance);
+                int targetZ = (int) (player.getZ() + Math.sin(angle) * distance);
 
-                    // Force the target chunk to load so terrain is generated and
-                    // the heightmap is available — avoids crashes from unknown chunks
-                    serverLevel.getChunk(targetX >> 4, targetZ >> 4);
+                // Force the target chunk to load so terrain is generated and
+                // the heightmap is available — avoids crashes from unknown chunks
+                serverLevel.getChunk(targetX >> 4, targetZ >> 4);
 
-                    // Find a safe surface Y using the heightmap, then scan upward
-                    // until we find two clear blocks for the player to stand in.
-                    // Minecraft's respawn logic rejects positions without headroom.
-                    int y = serverLevel.getHeight(Heightmap.Types.MOTION_BLOCKING, targetX, targetZ);
-                    while (y < serverLevel.getMaxBuildHeight() - 1
-                            && (!serverLevel.getBlockState(new BlockPos(targetX, y, targetZ))
-                                    .getCollisionShape(serverLevel, new BlockPos(targetX, y, targetZ)).isEmpty()
-                                    || !serverLevel.getBlockState(new BlockPos(targetX, y + 1, targetZ))
-                                            .getCollisionShape(serverLevel, new BlockPos(targetX, y + 1, targetZ))
-                                            .isEmpty())) {
-                        y++;
-                    }
-
-                    spawnPosition = new BlockPos(targetX, y, targetZ);
-                    chosenDistance = distance;
-
-                    isWater = !serverLevel.getBlockState(new BlockPos(targetX, y - 1, targetZ)).getFluidState()
-                            .isEmpty();
-                    if (allowWater || !isWater) {
-                        break;
-                    }
+                // Find a safe surface Y using the heightmap, then scan upward
+                // until we find two clear blocks for the player to stand in.
+                // Minecraft's respawn logic rejects positions without headroom.
+                int y = serverLevel.getHeight(Heightmap.Types.MOTION_BLOCKING, targetX, targetZ);
+                while (y < serverLevel.getMaxBuildHeight() - 1
+                        && (!serverLevel.getBlockState(new BlockPos(targetX, y, targetZ))
+                                .getCollisionShape(serverLevel, new BlockPos(targetX, y, targetZ)).isEmpty()
+                                || !serverLevel.getBlockState(new BlockPos(targetX, y + 1, targetZ))
+                                        .getCollisionShape(serverLevel, new BlockPos(targetX, y + 1, targetZ))
+                                        .isEmpty())) {
+                    y++;
                 }
 
-                serverPlayer.setRespawnPosition(
-                        serverLevel.dimension(),
-                        spawnPosition,
-                        0.0F,
-                        true,
-                        false);
+                spawnPosition = new BlockPos(targetX, y, targetZ);
+                chosenDistance = distance;
 
-                String biome = serverLevel.getBiome(spawnPosition).unwrapKey()
-                        .map(key -> key.location().getPath())
-                        .orElse("unknown");
-                String warning = isWater
-                        ? " (no dry land found after " + MAX_RESPAWN_ATTEMPTS + " attempts — respawn is over water)"
-                        : "";
-                player.displayClientMessage(
-                        Component.literal(
-                                "Respawn set " + chosenDistance + " blocks away in " + biome + " at: "
-                                        + spawnPosition.toShortString() + warning),
-                        false);
-            });
-        }
+                isWater = !serverLevel.getBlockState(new BlockPos(targetX, y - 1, targetZ)).getFluidState()
+                        .isEmpty();
+                if (allowWater || !isWater) {
+                    break;
+                }
+            }
+
+            serverPlayer.setRespawnPosition(
+                    serverLevel.dimension(),
+                    spawnPosition,
+                    0.0F,
+                    true,
+                    false);
+
+            String biome = serverLevel.getBiome(spawnPosition).unwrapKey()
+                    .map(key -> key.location().getPath())
+                    .orElse("unknown");
+            String warning = isWater
+                    ? " (no dry land found after " + MAX_RESPAWN_ATTEMPTS + " attempts — respawn is over water)"
+                    : "";
+            player.displayClientMessage(
+                    Component.literal(
+                            "Respawn set " + chosenDistance + " blocks away in " + biome + " at: "
+                                    + spawnPosition.toShortString() + warning),
+                    false);
+        });
     }
 
     public void killPlayer(String message, String ignored) {
         player.displayClientMessage(Component.literal(message), true);
 
-        Level level = player.getLevel();
-        if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
-            // Must run on the server thread — Minecraft ignores death
-            // processing off-thread.
-            serverLevel.getServer().execute(() -> {
-                if (serverPlayer.isAlive()) {
-                    serverPlayer.kill();
-                }
-            });
-        }
+        runOnServerThread((serverLevel, serverPlayer) -> {
+            if (serverPlayer.isAlive()) {
+                serverPlayer.kill();
+            }
+        });
     }
 
     public void respawnPlayer(String message, String ignored) {
-        Level level = player.getLevel();
-        if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
-            serverLevel.getServer().execute(() -> {
-                if (!serverPlayer.isAlive()) {
-                    PlayerList playerList = serverPlayer.server.getPlayerList();
-                    ServerPlayer newPlayer = playerList.respawn(serverPlayer, false);
-                    // respawn() creates a new ServerPlayer; update the reference
-                    // so subsequent calls operate on the live player.
-                    Endpoint.setPlayer(new PlayerWrapper(newPlayer));
-                }
-            });
-        }
+        runOnServerThread((serverLevel, serverPlayer) -> {
+            if (!serverPlayer.isAlive()) {
+                PlayerList playerList = serverPlayer.server.getPlayerList();
+                ServerPlayer newPlayer = playerList.respawn(serverPlayer, false);
+                // respawn() creates a new ServerPlayer; update the reference
+                // so subsequent calls operate on the live player.
+                Endpoint.setPlayer(new PlayerWrapper(newPlayer));
+            }
+        });
     }
 
     @NotNull
