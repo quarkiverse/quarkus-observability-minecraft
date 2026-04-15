@@ -3,12 +3,14 @@ package io.quarkiverse.observability.minecraft.runtime;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
+import jakarta.annotation.Priority;
 import jakarta.interceptor.AroundInvoke;
 import jakarta.interceptor.Interceptor;
 import jakarta.interceptor.InvocationContext;
 
 @MinecraftLog
 @Interceptor
+@Priority(Interceptor.Priority.LIBRARY_AFTER)
 public class MinecraftLogInterceptor {
     private final MinecraftService minecraft;
 
