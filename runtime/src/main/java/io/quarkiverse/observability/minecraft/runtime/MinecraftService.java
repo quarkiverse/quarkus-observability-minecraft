@@ -52,6 +52,11 @@ public class MinecraftService {
         return "Respawning player at new location";
     }
 
+    public String killAndRespawn() {
+        invokeMinecraft("kill-and-respawn");
+        return "Killing and respawning player";
+    }
+
     public void log(String message) {
         try {
             client.target(minecrafterConfig.baseURL())

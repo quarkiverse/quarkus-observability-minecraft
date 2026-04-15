@@ -73,6 +73,13 @@ public class Endpoint {
         return invokeOnPlayer("respawnPlayer", "Respawning player", null);
     }
 
+    @POST
+    @Path("/kill-and-respawn")
+    public String killAndRespawn() {
+        System.out.println("[Quarkcraft] kill-and-respawn");
+        return invokeOnPlayer("killAndRespawn", "Killing and respawning player", null);
+    }
+
     @NotNull
     private String invokeOnPlayer(String methodName, String message, String param) {
         if (player != null) {

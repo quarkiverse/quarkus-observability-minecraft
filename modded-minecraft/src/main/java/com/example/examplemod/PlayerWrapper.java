@@ -254,6 +254,21 @@ public class PlayerWrapper {
         });
     }
 
+    public void killAndRespawn(String message, String ignored) {
+        player.displayClientMessage(Component.literal(message), true);
+
+        runOnServerThread((serverLevel, serverPlayer) -> {
+            if (serverPlayer.isAlive()) {
+                serverPlayer.kill();
+            }
+            if (!serverPlayer.isAlive()) {
+                PlayerList playerList = serverPlayer.server.getPlayerList();
+                ServerPlayer newPlayer = playerList.respawn(serverPlayer, false);
+                Endpoint.setPlayer(new PlayerWrapper(newPlayer));
+            }
+        });
+    }
+
     @NotNull
     private Vec3 getPositionInFrontOfPlayer(int distance) {
         double x = player.getX() + distance * player.getLookAngle().x;
