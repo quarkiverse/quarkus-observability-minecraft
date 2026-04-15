@@ -2,6 +2,7 @@ package io.quarkiverse.observability.minecraft.deployment;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -16,18 +17,18 @@ public class MinecraftContainer extends GenericContainer<MinecraftContainer> imp
     private static final DockerImageName dockerImageName = DockerImageName.parse("minecraft-server");
     private final int minecraftApiPort;
 
-    public MinecraftContainer(final int minecraftApiPort) {
+    public MinecraftContainer(final int minecraftApiPort, Optional<Integer> devServicesPort) {
         super(dockerImageName);
         this.minecraftApiPort = minecraftApiPort;
         this.waitingFor(Wait.forLogMessage(".*" + "Preparing" + ".*", 1))
                 .withReuse(true)
                 .withExposedPorts(minecraftApiPort, minecraftGamePort);
 
-        // Make life easy for the minecraft client by fixing the client port
-        // This could be configurable
-        List<String> portBindings = new ArrayList<>();
-        portBindings.add(minecraftGamePort + ":" + minecraftGamePort);
-        this.setPortBindings(portBindings);
+        devServicesPort.ifPresent(port -> {
+            List<String> portBindings = new ArrayList<>();
+            portBindings.add(port + ":" + minecraftGamePort);
+            this.setPortBindings(portBindings);
+        });
 
     }
 
