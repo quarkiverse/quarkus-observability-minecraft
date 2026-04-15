@@ -96,13 +96,13 @@ class MinecrafterProcessor {
 
         CardPageBuildItem cardPageBuildItem = new CardPageBuildItem();
 
-        cardPageBuildItem.addPage(Page
-                .webComponentPageBuilder()
-                .title("Game controls")
+        cardPageBuildItem.setCustomCard("qwc-minecraft-card.js");
+        cardPageBuildItem.setLogo("dark-chicken.png", "chicken.png");
+
+        cardPageBuildItem.addPage(Page.webComponentPageBuilder()
+                .title("Game Controls")
                 .icon("font-awesome-solid:gamepad")
                 .componentLink("qwc-minecraft-respawn.js"));
-
-        cardPageBuildItem.setLogo("dark-chicken.png", "chicken.png");
 
         cardsProducer.produce(cardPageBuildItem);
     }
