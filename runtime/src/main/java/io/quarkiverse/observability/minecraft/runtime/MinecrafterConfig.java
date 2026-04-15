@@ -24,6 +24,12 @@ public interface MinecrafterConfig {
     String animalType();
 
     /**
+     * Whether to allow respawn points over water.
+     */
+    @WithDefault("false")
+    boolean allowRespawnOverWater();
+
+    /**
      * Details of the LLM used for generating creatures.
      */
     Model model();
