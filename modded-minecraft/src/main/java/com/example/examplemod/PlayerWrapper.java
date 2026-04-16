@@ -2,12 +2,12 @@ package com.example.examplemod;
 
 import static com.example.examplemod.EntityTypesInit.CRAB_ENTITY;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -47,22 +47,33 @@ public class PlayerWrapper {
     }
 
     /**
-     * Run an action on the server thread. Methods in this class are called
-     * from Undertow HTTP threads, but most Minecraft operations (spawning
-     * entities, killing players, etc.) are not thread-safe.
+     * Dispatch a named method onto the server thread. Methods in this class are
+     * called from Undertow HTTP threads via {@link Endpoint}, but most Minecraft
+     * operations (spawning entities, killing players, etc.) are not thread-safe.
+     * The Endpoint calls this single entry point, which handles both the
+     * thread dispatch and the reflective method invocation.
      */
-    private void runOnServerThread(Consumer<ServerLevel> action) {
+    public void invokeOnServerThread(String methodName, String message, String param) {
         Level level = player.getCommandSenderWorld();
         if (level instanceof ServerLevel serverLevel) {
-            serverLevel.getServer().execute(() -> action.accept(serverLevel));
+            serverLevel.getServer().execute(() -> {
+                try {
+                    Method m = getClass().getMethod(methodName, String.class, String.class);
+                    m.invoke(this, message, param);
+                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            });
         }
     }
 
-    private void runOnServerThread(BiConsumer<ServerLevel, ServerPlayer> action) {
-        Level level = player.getLevel();
-        if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
-            serverLevel.getServer().execute(() -> action.accept(serverLevel, serverPlayer));
-        }
+    /**
+     * Returns the player's world as a {@link ServerLevel}.
+     * Only safe to call from methods running on the server thread
+     * (i.e. dispatched via {@link #invokeOnServerThread}).
+     */
+    private ServerLevel getServerLevel() {
+        return (ServerLevel) player.getCommandSenderWorld();
     }
 
     private static void makeLightning(ServerLevel world, Vec3 pos) {
@@ -76,37 +87,35 @@ public class PlayerWrapper {
     public void event(String message, String animalName) {
         player.displayClientMessage(Component.literal(message), true);
 
-        runOnServerThread(serverLevel -> {
-            Vec3 pos = getPositionInFrontOfPlayer(3);
+        ServerLevel serverLevel = getServerLevel();
+        Vec3 pos = getPositionInFrontOfPlayer(3);
 
-            makeLightning(serverLevel, pos);
+        makeLightning(serverLevel, pos);
 
-            Entity animal = getAnimalType(animalName).create(serverLevel);
-            animal.setPos(pos);
-            String time = DATE_FORMAT.format(new Date());
-            animal.setCustomName(Component.literal(time));
-            animal.setCustomNameVisible(true);
-            serverLevel.addFreshEntity(animal);
-        });
+        Entity animal = getAnimalType(animalName).create(serverLevel);
+        animal.setPos(pos);
+        String time = DATE_FORMAT.format(new Date());
+        animal.setCustomName(Component.literal(time));
+        animal.setCustomNameVisible(true);
+        serverLevel.addFreshEntity(animal);
     }
 
     // Called reflectively
     public void customEvent(String message, String animalJson) {
         player.displayClientMessage(Component.literal(message), true);
 
-        runOnServerThread(serverLevel -> {
-            Vec3 pos = getPositionInFrontOfPlayer(3);
+        ServerLevel serverLevel = getServerLevel();
+        Vec3 pos = getPositionInFrontOfPlayer(3);
 
-            makeLightning(serverLevel, pos);
+        makeLightning(serverLevel, pos);
 
-            WuffStuff wuffStuff = objectMapper.readValue(animalJson, WuffStuff.class);
-            Wuff animal = CRAB_ENTITY.get().create(serverLevel);
-            animal.setPos(pos);
-            animal.setWuffStuff(wuffStuff);
-            animal.setCustomName(Component.literal(wuffStuff.getName()));
-            animal.setCustomNameVisible(true);
-            serverLevel.addFreshEntity(animal);
-        });
+        WuffStuff wuffStuff = objectMapper.readValue(animalJson, WuffStuff.class);
+        Wuff animal = CRAB_ENTITY.get().create(serverLevel);
+        animal.setPos(pos);
+        animal.setWuffStuff(wuffStuff);
+        animal.setCustomName(Component.literal(wuffStuff.getName()));
+        animal.setCustomNameVisible(true);
+        serverLevel.addFreshEntity(animal);
     }
 
     private EntityType getAnimalType(String animalName) {
@@ -142,35 +151,33 @@ public class PlayerWrapper {
 
     public void say(String message, String ignored) {
         // Use the chat interface for logs since it wraps more nicely
-        runOnServerThread(serverLevel -> {
-            Component msg = Component.literal(message);
-            player.sendSystemMessage(msg);
-        });
+        Component msg = Component.literal(message);
+        player.sendSystemMessage(msg);
     }
 
     public void explode(String message, String ignored) {
         player.displayClientMessage(Component.literal(message), true);
 
-        runOnServerThread(serverLevel -> {
-            Entity animal = EntityType.FROG.create(serverLevel);
-            animal.setPos(getPositionInFrontOfPlayer(6));
-            serverLevel.addFreshEntity(animal);
+        ServerLevel serverLevel = getServerLevel();
+        Entity animal = EntityType.FROG.create(serverLevel);
+        animal.setPos(getPositionInFrontOfPlayer(6));
+        serverLevel.addFreshEntity(animal);
 
-            List<BlockPos> affectedPositions = new ArrayList<>();
-            affectedPositions.add(new BlockPos(animal.getX(), animal.getY(),
-                    animal.getZ()));
-            Explosion explosion = new Explosion(serverLevel, animal, animal.getX(), animal.getY(),
-                    animal.getZ(), 6F, affectedPositions);
+        List<BlockPos> affectedPositions = new ArrayList<>();
+        affectedPositions.add(new BlockPos(animal.getX(), animal.getY(),
+                animal.getZ()));
+        Explosion explosion = new Explosion(serverLevel, animal, animal.getX(), animal.getY(),
+                animal.getZ(), 6F, affectedPositions);
 
-            explosion.explode();
-        });
+        explosion.explode();
     }
 
     public void setRespawn(String message, String config) {
         boolean allowWater = Boolean.parseBoolean(config);
         player.displayClientMessage(Component.literal(message), true);
 
-        runOnServerThread((serverLevel, serverPlayer) -> {
+        ServerLevel serverLevel = getServerLevel();
+        if (player instanceof ServerPlayer serverPlayer) {
             // Skip retries when water is acceptable
             int maxAttempts = allowWater ? 1 : MAX_RESPAWN_ATTEMPTS;
             BlockPos spawnPosition = null;
@@ -233,13 +240,13 @@ public class PlayerWrapper {
                             "Respawn set " + chosenDistance + " blocks away in " + biome + " at: "
                                     + spawnPosition.toShortString() + warning),
                     false);
-        });
+        }
     }
 
     public void killAndRespawn(String message, String ignored) {
         player.displayClientMessage(Component.literal(message), true);
+        if (player instanceof ServerPlayer serverPlayer) {
 
-        runOnServerThread((serverLevel, serverPlayer) -> {
             if (serverPlayer.isAlive()) {
                 serverPlayer.kill();
             }
@@ -248,7 +255,7 @@ public class PlayerWrapper {
                 ServerPlayer newPlayer = playerList.respawn(serverPlayer, false);
                 Endpoint.setPlayer(new PlayerWrapper(newPlayer));
             }
-        });
+        }
     }
 
     @NotNull

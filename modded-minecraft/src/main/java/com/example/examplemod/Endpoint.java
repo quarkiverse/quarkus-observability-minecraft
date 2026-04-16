@@ -71,10 +71,11 @@ public class Endpoint {
         if (player != null) {
             // The player may be in a different classloader to us, so we need to use more reflection
             try {
-                // Cheerfully assume all methods on PlayerWrapper take a string as an argument
+                // Dispatch onto the Minecraft server thread — PlayerWrapper methods
+                // are not thread-safe and must not run on the Undertow HTTP thread.
                 Method m = player.getClass()
-                        .getMethod(methodName, String.class, String.class);
-                m.invoke(player, message, param);
+                        .getMethod("invokeOnServerThread", String.class, String.class, String.class);
+                m.invoke(player, methodName, message, param);
                 return "minecraft world updated with " + methodName;
             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
