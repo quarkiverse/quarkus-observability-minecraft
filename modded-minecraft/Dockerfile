@@ -13,7 +13,7 @@ FROM webhippie/minecraft-forge:43.0
 # This is needed for the client launched with `./gradlew runClient` to be able to connect
 ENV MINECRAFT_ONLINE_MODE=false
 # For performance reasons, keep the world small
-ENV MINECRAFT_MAX_WORLD_SIZE=299
+ENV MINECRAFT_MAX_WORLD_SIZE=288
 
 EXPOSE 8081
 

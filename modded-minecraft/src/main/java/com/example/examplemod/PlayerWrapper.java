@@ -178,33 +178,37 @@ public class PlayerWrapper {
             boolean isWater = false;
 
             for (int attempt = 0; attempt < maxAttempts; attempt++) {
-                // Pick a random direction and go 300-500 blocks away
+                // Pick a random direction, choosing a distance based on the max world size.
+                // Note: getAbsoluteMaxWorldSize() returns the max-world-size server property
+                // (a radius), NOT WorldBorder.getSize() which defaults to ~60M regardless.
+                int maxWorldRadius = serverLevel.getServer().getAbsoluteMaxWorldSize();
+                SpawnLocationHelper.DistanceRange range = SpawnLocationHelper.computeRespawnDistanceRange(maxWorldRadius * 2.0);
                 double angle = Math.random() * 2 * Math.PI;
-                int distance = 300 + (int) (Math.random() * 200);
-                int targetX = (int) (player.getX() + Math.cos(angle) * distance);
-                int targetZ = (int) (player.getZ() + Math.sin(angle) * distance);
+                int distance = range.min() + (int) (Math.random() * Math.max(1, range.max() - range.min()));
+                BlockPos target = SpawnLocationHelper.computeTargetPosition(player.getX(), player.getZ(),
+                        angle, distance, maxWorldRadius);
 
                 // Force the target chunk to load so terrain is generated and
                 // the heightmap is available — avoids crashes from unknown chunks
-                serverLevel.getChunk(targetX >> 4, targetZ >> 4);
+                serverLevel.getChunk(target.getX() >> 4, target.getZ() >> 4);
 
                 // Find a safe surface Y using the heightmap, then scan upward
                 // until we find two clear blocks for the player to stand in.
                 // Minecraft's respawn logic rejects positions without headroom.
-                int y = serverLevel.getHeight(Heightmap.Types.MOTION_BLOCKING, targetX, targetZ);
+                int y = serverLevel.getHeight(Heightmap.Types.MOTION_BLOCKING, target.getX(), target.getZ());
                 while (y < serverLevel.getMaxBuildHeight() - 1
-                        && (!serverLevel.getBlockState(new BlockPos(targetX, y, targetZ))
-                                .getCollisionShape(serverLevel, new BlockPos(targetX, y, targetZ)).isEmpty()
-                                || !serverLevel.getBlockState(new BlockPos(targetX, y + 1, targetZ))
-                                        .getCollisionShape(serverLevel, new BlockPos(targetX, y + 1, targetZ))
+                        && (!serverLevel.getBlockState(new BlockPos(target.getX(), y, target.getZ()))
+                                .getCollisionShape(serverLevel, new BlockPos(target.getX(), y, target.getZ())).isEmpty()
+                                || !serverLevel.getBlockState(new BlockPos(target.getX(), y + 1, target.getZ()))
+                                        .getCollisionShape(serverLevel, new BlockPos(target.getX(), y + 1, target.getZ()))
                                         .isEmpty())) {
                     y++;
                 }
 
-                spawnPosition = new BlockPos(targetX, y, targetZ);
+                spawnPosition = new BlockPos(target.getX(), y, target.getZ());
                 chosenDistance = distance;
 
-                isWater = !serverLevel.getBlockState(new BlockPos(targetX, y - 1, targetZ)).getFluidState()
+                isWater = !serverLevel.getBlockState(new BlockPos(target.getX(), y - 1, target.getZ())).getFluidState()
                         .isEmpty();
                 if (allowWater || !isWater) {
                     break;
@@ -249,12 +253,9 @@ public class PlayerWrapper {
 
     @NotNull
     private Vec3 getPositionInFrontOfPlayer(int distance) {
-        double x = player.getX() + distance * player.getLookAngle().x;
-        double y = player.getY() + distance; // Spawn at the same height as the player, but a bit up in the air
-        double z = player.getZ() + distance * player.getLookAngle().z;
-
-        Vec3 pos = new Vec3(x, y, z);
-        return pos;
+        return SpawnLocationHelper.computePositionInFrontOf(
+                player.getX(), player.getY(), player.getZ(),
+                player.getLookAngle().x, player.getLookAngle().z, distance);
     }
 
 }

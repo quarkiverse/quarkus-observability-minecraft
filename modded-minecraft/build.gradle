@@ -146,6 +146,8 @@ dependencies {
 
     implementation "io.undertow:undertow-core:2.2.17.Final"
 
+    testImplementation "org.junit.jupiter:junit-jupiter:5.9.3"
+
     // Examples using mod jars from ./libs
     // implementation fg.deobf("blank:coolmod-${mc_version}:${coolmod_version}")
 
@@ -197,6 +199,10 @@ publishing {
             url "file://${project.projectDir}/mcmodsrepo"
         }
     }
+}
+
+test {
+    useJUnitPlatform()
 }
 
 tasks.withType(JavaCompile).configureEach {
