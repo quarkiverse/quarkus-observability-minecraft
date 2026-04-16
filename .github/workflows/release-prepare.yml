@@ -12,6 +12,8 @@ on:
 
 permissions:
   contents: read
+  attestations: write
+  id-token: write
 
 
 concurrency:
