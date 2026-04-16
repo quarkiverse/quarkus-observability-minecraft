@@ -232,28 +232,6 @@ public class PlayerWrapper {
         });
     }
 
-    public void killPlayer(String message, String ignored) {
-        player.displayClientMessage(Component.literal(message), true);
-
-        runOnServerThread((serverLevel, serverPlayer) -> {
-            if (serverPlayer.isAlive()) {
-                serverPlayer.kill();
-            }
-        });
-    }
-
-    public void respawnPlayer(String message, String ignored) {
-        runOnServerThread((serverLevel, serverPlayer) -> {
-            if (!serverPlayer.isAlive()) {
-                PlayerList playerList = serverPlayer.server.getPlayerList();
-                ServerPlayer newPlayer = playerList.respawn(serverPlayer, false);
-                // respawn() creates a new ServerPlayer; update the reference
-                // so subsequent calls operate on the live player.
-                Endpoint.setPlayer(new PlayerWrapper(newPlayer));
-            }
-        });
-    }
-
     public void killAndRespawn(String message, String ignored) {
         player.displayClientMessage(Component.literal(message), true);
 

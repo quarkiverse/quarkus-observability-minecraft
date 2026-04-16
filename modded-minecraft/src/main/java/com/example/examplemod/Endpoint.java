@@ -60,20 +60,6 @@ public class Endpoint {
     }
 
     @POST
-    @Path("/kill")
-    public String kill() {
-        System.out.println("[Quarkcraft] kill");
-        return invokeOnPlayer("killPlayer", "Killing player to trigger respawn", null);
-    }
-
-    @POST
-    @Path("/respawn")
-    public String respawn() {
-        System.out.println("[Quarkcraft] respawn");
-        return invokeOnPlayer("respawnPlayer", "Respawning player", null);
-    }
-
-    @POST
     @Path("/kill-and-respawn")
     public String killAndRespawn() {
         System.out.println("[Quarkcraft] kill-and-respawn");
