@@ -49,11 +49,8 @@ export class QwcMinecraftRespawn extends LitElement {
     }
 
     _killAndRespawnPlayer() {
-        notifier.showInfoMessage('Killing player...');
-        return this.jsonRpc.killPlayer().then(() => {
-            notifier.showInfoMessage('Player killed — respawning...');
-            return this.jsonRpc.respawnPlayer();
-        }).then(() => {
+        notifier.showInfoMessage('Killing and respawning player...');
+        return this.jsonRpc.killAndRespawn().then(() => {
             notifier.showSuccessMessage('Player respawned at new location');
         }).catch(error => {
             notifier.showErrorMessage(error.message || 'Failed to respawn');
