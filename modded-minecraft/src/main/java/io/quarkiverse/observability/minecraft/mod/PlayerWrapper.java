@@ -1,6 +1,6 @@
-package com.example.examplemod;
+package io.quarkiverse.observability.minecraft.mod;
 
-import static com.example.examplemod.EntityTypesInit.CRAB_ENTITY;
+import static io.quarkiverse.observability.minecraft.mod.EntityTypesInit.CRAB_ENTITY;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

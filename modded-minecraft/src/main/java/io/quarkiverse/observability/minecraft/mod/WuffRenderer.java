@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package io.quarkiverse.observability.minecraft.mod;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
@@ -13,15 +13,15 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public class WuffRenderer extends MobRenderer<Wuff, WuffModel<Wuff>> {
 
-    protected static final ResourceLocation WOLF_LOCATION = new ResourceLocation(ExampleMod.MOD_ID,
+    protected static final ResourceLocation WOLF_LOCATION = new ResourceLocation(QuarkiverseMod.MOD_ID,
             "textures/entity/wuff.png");
-    protected static final ResourceLocation WOLF_LOCATION_WHITE_SPOT = new ResourceLocation(ExampleMod.MOD_ID,
+    protected static final ResourceLocation WOLF_LOCATION_WHITE_SPOT = new ResourceLocation(QuarkiverseMod.MOD_ID,
             "textures/entity/wuff-white-spot.png");
-    protected static final ResourceLocation WOLF_LOCATION_BLACK_SPOT = new ResourceLocation(ExampleMod.MOD_ID,
+    protected static final ResourceLocation WOLF_LOCATION_BLACK_SPOT = new ResourceLocation(QuarkiverseMod.MOD_ID,
             "textures/entity/wuff-black-spot.png");
-    protected static final ResourceLocation WOLF_LOCATION_STRIPES = new ResourceLocation(ExampleMod.MOD_ID,
+    protected static final ResourceLocation WOLF_LOCATION_STRIPES = new ResourceLocation(QuarkiverseMod.MOD_ID,
             "textures/entity/wuff-stripe.png");
-    protected static final ResourceLocation WOLF_LOCATION_SPECTRAL_STRIPES = new ResourceLocation(ExampleMod.MOD_ID,
+    protected static final ResourceLocation WOLF_LOCATION_SPECTRAL_STRIPES = new ResourceLocation(QuarkiverseMod.MOD_ID,
             "textures/entity/wuff-spectral.png");
 
     public WuffRenderer(EntityRendererProvider.Context p_174452_) {

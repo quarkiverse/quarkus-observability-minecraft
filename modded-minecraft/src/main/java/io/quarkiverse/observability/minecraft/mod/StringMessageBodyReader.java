@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package io.quarkiverse.observability.minecraft.mod;
 
 import java.io.BufferedReader;
 import java.io.InputStream;

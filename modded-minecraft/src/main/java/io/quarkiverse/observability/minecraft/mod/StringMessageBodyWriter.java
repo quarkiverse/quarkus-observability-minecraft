@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package io.quarkiverse.observability.minecraft.mod;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -20,8 +20,8 @@ import jakarta.ws.rs.ext.Provider;
  * and classloader shenanigans.
  */
 @Provider
-@Produces("text/plain")
-public class PlainStringMessageBodyWriter implements MessageBodyWriter<String> {
+@Produces("text/html")
+public class StringMessageBodyWriter implements MessageBodyWriter<String> {
 
     @Override
     public boolean isWriteable(Class<?> type, Type genericType,

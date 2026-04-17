@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package io.quarkiverse.observability.minecraft.mod;
 
 import java.util.HashSet;
 import java.util.Set;

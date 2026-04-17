@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package io.quarkiverse.observability.minecraft.mod;
 
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;

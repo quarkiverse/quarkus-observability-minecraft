@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package io.quarkiverse.observability.minecraft.mod;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

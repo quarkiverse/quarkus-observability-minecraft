@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package io.quarkiverse.observability.minecraft.mod;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;

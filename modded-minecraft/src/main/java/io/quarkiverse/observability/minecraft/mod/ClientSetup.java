@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package io.quarkiverse.observability.minecraft.mod;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundSource;

@@ -1,6 +1,6 @@
-package com.example.examplemod;
+package io.quarkiverse.observability.minecraft.mod;
 
-import static com.example.examplemod.EntityTypesInit.CRAB_ENTITY;
+import static io.quarkiverse.observability.minecraft.mod.EntityTypesInit.CRAB_ENTITY;
 
 import java.util.stream.Collectors;
 
@@ -33,19 +33,19 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegisterEvent;
 
 // The value here should match an entry in the META-INF/mods.toml file
-@Mod("examplemod")
-public class ExampleMod {
+@Mod("quarkiversemod")
+public class QuarkiverseMod {
     // Directly reference a slf4j logger
     private static final Logger LOGGER = LogUtils.getLogger();
 
     static EntityType CUSTOM_ENTITY_TYPE;
 
-    static final String MOD_ID = "examplemod";
+    static final String MOD_ID = "quarkiversemod";
 
     public static final DeferredRegister<EntityDataSerializer<?>> ENTITY_DATA_SERIALIZERS = DeferredRegister
-            .create(ForgeRegistries.Keys.ENTITY_DATA_SERIALIZERS, ExampleMod.MOD_ID);
+            .create(ForgeRegistries.Keys.ENTITY_DATA_SERIALIZERS, QuarkiverseMod.MOD_ID);
 
-    public ExampleMod() {
+    public QuarkiverseMod() {
         // Register the setup method for modloading
         IEventBus bus = FMLJavaModLoadingContext.get()
                 .getModEventBus();
@@ -76,7 +76,7 @@ public class ExampleMod {
     @SubscribeEvent
     public void enqueueIMC(final InterModEnqueueEvent event) {
         // Some example code to dispatch IMC to another mod
-        InterModComms.sendTo("examplemod", "helloworld", () -> {
+        InterModComms.sendTo("quarkiversemod", "helloworld", () -> {
             LOGGER.info("Hello world from the MDK");
             return "Hello world";
         });
