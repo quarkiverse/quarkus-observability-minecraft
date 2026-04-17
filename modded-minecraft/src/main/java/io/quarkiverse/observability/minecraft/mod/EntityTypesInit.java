@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package io.quarkiverse.observability.minecraft.mod;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -11,7 +11,7 @@ public class EntityTypesInit {
     //    private static final DeferredRegister<EntityType<?>> BLOCKS = DeferredRegister.create(ENTITY_TYPES, MOD_ID);
 
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES,
-            ExampleMod.MOD_ID);
+            QuarkiverseMod.MOD_ID);
 
     public static final RegistryObject<EntityType<Wuff>> CRAB_ENTITY = ENTITY_TYPES.register("crab",
             () -> createStandardEntityType("crab", Wuff::new, MobCategory.CREATURE, 1.3f, 1.8f));
@@ -22,7 +22,7 @@ public class EntityTypesInit {
     //                        .sized(1.0F, 2.0F)
     //                        .fireImmune()
     //                        .updateInterval(1)
-    //                        .build("examplemod:example_monster");
+    //                        .build("quarkiversemod:example_monster");
     //                return CUSTOM_ENTITY_TYPE;
     //            });
 
@@ -31,6 +31,6 @@ public class EntityTypesInit {
             float height) {
         return EntityType.Builder.of(factory, classification)
                 .sized(width, height)
-                .build(ExampleMod.MOD_ID + ":" + entity_name);
+                .build(QuarkiverseMod.MOD_ID + ":" + entity_name);
     }
 }
