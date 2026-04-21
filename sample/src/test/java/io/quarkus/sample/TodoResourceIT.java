@@ -2,8 +2,8 @@ package io.quarkus.sample;
 
 import static io.restassured.RestAssured.get;
 import static io.restassured.RestAssured.given;
-import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 
