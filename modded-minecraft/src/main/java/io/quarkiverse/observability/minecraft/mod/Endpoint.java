@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 
@@ -56,7 +57,7 @@ public class Endpoint {
     @Consumes("application/json")
     public String setRespawn(String config) {
         System.out.println("[Quarkcraft] set-respawn");
-        return invokeOnPlayer("setRespawn", "Respawn point updated", config);
+        return invokeOnPlayerAndWait("setRespawn", "Respawn point updated", config);
     }
 
     @POST
@@ -64,6 +65,12 @@ public class Endpoint {
     public String killAndRespawn() {
         System.out.println("[Quarkcraft] kill-and-respawn");
         return invokeOnPlayer("killAndRespawn", "Killing and respawning player", null);
+    }
+
+    @GET
+    @Path("/health")
+    public String getHealth() {
+        return invokeOnPlayerAndWait("getHealth");
     }
 
     @NotNull
@@ -77,6 +84,38 @@ public class Endpoint {
                         .getMethod("invokeOnServerThread", String.class, String.class, String.class);
                 m.invoke(player, methodName, message, param);
                 return "minecraft world updated with " + methodName;
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+                return "internal error";
+            }
+        } else {
+            return "no player logged in";
+        }
+    }
+
+    @NotNull
+    private String invokeOnPlayerAndWait(String methodName, String message, String param) {
+        if (player != null) {
+            try {
+                Method m = player.getClass()
+                        .getMethod("invokeOnServerThreadSynchronous", String.class, String.class, String.class);
+                return (String) m.invoke(player, methodName, message, param);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+                return "internal error";
+            }
+        } else {
+            return "no player logged in";
+        }
+    }
+
+    @NotNull
+    private String invokeOnPlayerAndWait(String methodName) {
+        if (player != null) {
+            try {
+                Method m = player.getClass()
+                        .getMethod("invokeOnServerThreadSynchronous", String.class);
+                return (String) m.invoke(player, methodName);
             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
                 return "internal error";

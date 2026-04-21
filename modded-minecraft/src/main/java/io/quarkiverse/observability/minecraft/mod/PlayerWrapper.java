@@ -8,6 +8,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -58,13 +61,69 @@ public class PlayerWrapper {
         if (level instanceof ServerLevel serverLevel) {
             serverLevel.getServer().execute(() -> {
                 try {
-                    Method m = getClass().getMethod(methodName, String.class, String.class);
-                    m.invoke(this, message, param);
+                    // Cheerfully assume methods either take two string params, or no params
+                    if (message != null) {
+                        Method m = getClass().getMethod(methodName, String.class, String.class);
+                        m.invoke(this, message, param);
+                    } else {
+                        Method m = getClass().getMethod(methodName);
+                        m.invoke(this);
+                    }
                 } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                     e.printStackTrace();
                 }
             });
         }
+    }
+
+    public String invokeOnServerThreadSynchronous(String methodName, String message, String param) {
+        Supplier s = () -> {
+            try {
+                Method m = getClass().getMethod(methodName, String.class, String.class);
+                return m.invoke(this, message, param);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        };
+
+        return invokeOnServerThreadSynchronous(s);
+    }
+
+    public String invokeOnServerThreadSynchronous(String methodName) {
+        Supplier s = () -> {
+            try {
+                Method m = getClass().getMethod(methodName);
+                return m.invoke(this);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        };
+
+        return invokeOnServerThreadSynchronous(s);
+
+    }
+
+    private String invokeOnServerThreadSynchronous(Supplier methodInvocation) {
+        Level level = player.getCommandSenderWorld();
+        if (level instanceof ServerLevel serverLevel) {
+            CompletableFuture<String> future = new CompletableFuture<>();
+            serverLevel.getServer().execute(() -> {
+                try {
+                    Object result = methodInvocation.get();
+                    future.complete(result != null ? result.toString() : "");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    future.completeExceptionally(e);
+                }
+            });
+            try {
+                return future.get();
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+                return "internal error";
+            }
+        }
+        return "no server level";
     }
 
     /**
@@ -172,7 +231,7 @@ public class PlayerWrapper {
         explosion.explode();
     }
 
-    public void setRespawn(String message, String config) {
+    public String setRespawn(String message, String config) {
         boolean allowWater = Boolean.parseBoolean(config);
         player.displayClientMessage(Component.literal(message), true);
 
@@ -235,12 +294,12 @@ public class PlayerWrapper {
             String warning = isWater
                     ? " (no dry land found after " + MAX_RESPAWN_ATTEMPTS + " attempts — respawn is over water)"
                     : "";
-            player.displayClientMessage(
-                    Component.literal(
-                            "Respawn set " + chosenDistance + " blocks away in " + biome + " at: "
-                                    + spawnPosition.toShortString() + warning),
-                    false);
+            String description = "Respawn set " + chosenDistance + " blocks away in " + biome + " at: "
+                    + spawnPosition.toShortString() + warning;
+            player.displayClientMessage(Component.literal(description), false);
+            return description;
         }
+        return "Respawn point not set — no server player";
     }
 
     public void killAndRespawn(String message, String ignored) {
@@ -256,6 +315,15 @@ public class PlayerWrapper {
                 Endpoint.setPlayer(new PlayerWrapper(newPlayer));
             }
         }
+    }
+
+    /**
+     * Get player health directly (thread-safe read operation).
+     * Unlike other methods, this doesn't need server thread dispatch
+     * because reading health is a safe operation.
+     */
+    public String getHealth() {
+        return String.valueOf(player.getHealth());
     }
 
     @NotNull
