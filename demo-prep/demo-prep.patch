@@ -34,4 +34,4 @@ diff --git a/sample/pom.xml b/sample/pom.xml
 +    <!--    </dependency>-->
      <dependency>
        <groupId>io.quarkus</groupId>
-       <artifactId>quarkus-junit5</artifactId>
+       <artifactId>quarkus-junit</artifactId>
