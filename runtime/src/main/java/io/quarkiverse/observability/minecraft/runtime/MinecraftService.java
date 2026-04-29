@@ -66,16 +66,20 @@ public class MinecraftService {
         invokeMinecraft("boom");
     }
 
-    public Multi<String> setRespawn() {
-        return Multi.createFrom().emitter(emitter -> {
-            emitter.emit("Setting respawn point...");
-            executor.submit(() -> {
-                String response = invokeMinecraftSynchronously("set-respawn",
-                        String.valueOf(minecrafterConfig.allowRespawnOverWater()));
-                emitter.emit(response.isEmpty() ? "Failed to set respawn point" : response);
-                emitter.complete();
-            });
-        });
+    public String setRespawn() {
+        String response = invokeMinecraftSynchronously("set-respawn",
+                String.valueOf(minecrafterConfig.allowRespawnOverWater()));
+        return response.isEmpty() ? "Failed to set respawn point" : response;
+    }
+
+    public String killPlayer() {
+        invokeMinecraft("kill");
+        return "Killing player to trigger respawn";
+    }
+
+    public String respawnPlayer() {
+        invokeMinecraft("respawn");
+        return "Respawning player at new location";
     }
 
     public String killAndRespawn() {
