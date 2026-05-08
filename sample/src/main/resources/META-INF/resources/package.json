@@ -1,7 +1,7 @@
 {
   "private": true,
   "dependencies": {
-    "axios": "^1.15.0",
+    "axios": "^1.15.2",
     "director": "^1.2.0",
     "todomvc-app-css": "^2.0.0",
     "todomvc-common": "^1.0.1",
