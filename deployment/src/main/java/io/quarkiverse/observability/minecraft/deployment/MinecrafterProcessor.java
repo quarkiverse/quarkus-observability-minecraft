@@ -27,8 +27,8 @@ import io.quarkus.deployment.builditem.LogHandlerBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import io.quarkus.deployment.dev.devservices.DevServicesConfig;
 import io.quarkus.devui.spi.JsonRPCProvidersBuildItem;
+import io.quarkus.devui.spi.page.CardAction;
 import io.quarkus.devui.spi.page.CardPageBuildItem;
-import io.quarkus.devui.spi.page.Page;
 import io.quarkus.resteasy.reactive.spi.ExceptionMapperBuildItem;
 
 class MinecrafterProcessor {
@@ -103,13 +103,18 @@ class MinecrafterProcessor {
 
         CardPageBuildItem cardPageBuildItem = new CardPageBuildItem();
 
-        cardPageBuildItem.setCustomCard("qwc-minecraft-card.js");
-        cardPageBuildItem.setLogo("dark-chicken.png", "chicken.png");
+        cardPageBuildItem.addAction(CardAction.actionBuilder()
+                .title("Reset Spawn Point")
+                .icon("font-awesome-solid:bed")
+                .jsonRpcMethodName("setRespawn")
+                .build());
+        cardPageBuildItem.addAction(CardAction.actionBuilder()
+                .title("Kill and Respawn")
+                .icon("font-awesome-solid:skull-crossbones")
+                .jsonRpcMethodName("killAndRespawn")
+                .build());
 
-        cardPageBuildItem.addPage(Page.webComponentPageBuilder()
-                .title("Game Controls")
-                .icon("font-awesome-solid:gamepad")
-                .componentLink("qwc-minecraft-respawn.js"));
+        cardPageBuildItem.setLogo("dark-chicken.png", "chicken.png");
 
         cardsProducer.produce(cardPageBuildItem);
     }
