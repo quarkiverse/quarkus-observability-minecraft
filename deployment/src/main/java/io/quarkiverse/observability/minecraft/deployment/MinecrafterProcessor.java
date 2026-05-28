@@ -29,6 +29,7 @@ import io.quarkus.deployment.dev.devservices.DevServicesConfig;
 import io.quarkus.devui.spi.JsonRPCProvidersBuildItem;
 import io.quarkus.devui.spi.page.CardAction;
 import io.quarkus.devui.spi.page.CardPageBuildItem;
+import io.quarkus.devui.spi.page.Page;
 import io.quarkus.resteasy.reactive.spi.ExceptionMapperBuildItem;
 
 class MinecrafterProcessor {
@@ -102,6 +103,11 @@ class MinecrafterProcessor {
     void createMinecraftPageOnCard(BuildProducer<CardPageBuildItem> cardsProducer) {
 
         CardPageBuildItem cardPageBuildItem = new CardPageBuildItem();
+
+        cardPageBuildItem.addPage(Page.webComponentPageBuilder()
+                .title("Health")
+                .icon("font-awesome-solid:heart")
+                .streamingLabelJsonRPCMethodName("streamHealth"));
 
         cardPageBuildItem.addAction(CardAction.actionBuilder()
                 .title("Reset Spawn Point")

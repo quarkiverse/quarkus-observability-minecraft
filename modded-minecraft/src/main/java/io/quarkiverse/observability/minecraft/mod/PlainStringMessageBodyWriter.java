@@ -42,7 +42,6 @@ public class PlainStringMessageBodyWriter implements MessageBodyWriter<String> {
             OutputStream out) throws IOException, WebApplicationException {
 
         Writer writer = new PrintWriter(out);
-        writer.write("[minecraft servlet] ");
         writer.write(string);
         writer.flush();
         writer.close();
