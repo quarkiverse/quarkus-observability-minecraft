@@ -5,6 +5,7 @@ import java.util.Optional;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
+import io.smallrye.config.WithDefault;
 
 @ConfigRoot(phase = ConfigPhase.BUILD_TIME)
 @ConfigMapping(prefix = "quarkus.minecrafter")
@@ -21,7 +22,13 @@ public interface MinecrafterDevServicesConfig {
          * If not set, an ephemeral host port is used.
          */
         Optional<Integer> port();
+
+        /**
+         * Whether to reuse the container across test runs.
+         * If true, the container will be kept running after tests complete.
+         * Defaults to true for faster test iterations during development.
+         */
+        @WithDefault("true")
+        boolean reuse();
     }
 }
-
-// Made with Bob
