@@ -65,6 +65,8 @@
               <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
               <maven.home>${maven.home}</maven.home>
               <maven.repo>${settings.localRepository}</maven.repo>
+              <quarkus.minecrafter.devservices.reuse>false</quarkus.minecrafter.devservices.reuse>
+              <quarkus.datasource.devservices.reuse>false</quarkus.datasource.devservices.reuse>
             </systemPropertyVariables>
           </configuration>
         </plugin>

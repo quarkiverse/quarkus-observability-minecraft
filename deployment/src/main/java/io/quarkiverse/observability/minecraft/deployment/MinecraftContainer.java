@@ -17,11 +17,11 @@ public class MinecraftContainer extends GenericContainer<MinecraftContainer> imp
     private static final DockerImageName dockerImageName = DockerImageName.parse("minecraft-server");
     private final int minecraftApiPort;
 
-    public MinecraftContainer(final int minecraftApiPort, Optional<Integer> devServicesPort) {
+    public MinecraftContainer(final int minecraftApiPort, Optional<Integer> devServicesPort, boolean reuse) {
         super(dockerImageName);
         this.minecraftApiPort = minecraftApiPort;
         this.waitingFor(Wait.forLogMessage(".*" + "Preparing" + ".*", 1))
-                .withReuse(true)
+                .withReuse(reuse)
                 .withExposedPorts(minecraftApiPort, minecraftGamePort);
 
         devServicesPort.ifPresent(port -> {
