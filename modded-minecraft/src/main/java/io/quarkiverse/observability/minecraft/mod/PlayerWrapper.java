@@ -77,7 +77,7 @@ public class PlayerWrapper {
     }
 
     public String invokeOnServerThreadSynchronous(String methodName, String message, String param) {
-        Supplier s = () -> {
+        Supplier<Object> s = () -> {
             try {
                 Method m = getClass().getMethod(methodName, String.class, String.class);
                 return m.invoke(this, message, param);
@@ -90,7 +90,7 @@ public class PlayerWrapper {
     }
 
     public String invokeOnServerThreadSynchronous(String methodName) {
-        Supplier s = () -> {
+        Supplier<Object> s = () -> {
             try {
                 Method m = getClass().getMethod(methodName);
                 return m.invoke(this);
