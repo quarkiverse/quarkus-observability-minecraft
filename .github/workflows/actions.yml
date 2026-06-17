@@ -30,6 +30,3 @@ jobs:
       - name: Build todo app
         run: mvn install
         working-directory: sample
-      - uses: dineshsonachalam/markdown-autodocs@v1.0.7
-        with:
-          output_file_paths: '[./demo-script.md]'
