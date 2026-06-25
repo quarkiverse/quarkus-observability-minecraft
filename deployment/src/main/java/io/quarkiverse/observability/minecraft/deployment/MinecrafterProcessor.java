@@ -8,6 +8,7 @@ import java.util.Map;
 import jakarta.ws.rs.Priorities;
 
 import org.jboss.jandex.DotName;
+import org.jboss.logging.Logger;
 
 import io.quarkiverse.observability.minecraft.runtime.*;
 import io.quarkiverse.observability.minecraft.runtime.ai.LLMWuffMaker;
@@ -31,10 +32,14 @@ import io.quarkus.devui.spi.page.CardAction;
 import io.quarkus.devui.spi.page.CardPageBuildItem;
 import io.quarkus.devui.spi.page.Page;
 import io.quarkus.resteasy.reactive.spi.ExceptionMapperBuildItem;
+import io.quarkus.runtime.configuration.ConfigUtils;
 
 class MinecrafterProcessor {
 
+    private static final Logger log = Logger.getLogger(MinecrafterProcessor.class);
+
     private static final String FEATURE = "minecrafter";
+    private static final String BASE_URL_CONFIG_KEY = "quarkus.minecrafter.base-url";
     private static final DotName JAX_RS_GET = DotName.createSimple("jakarta.ws.rs.GET");
     private static final DotName JAX_RS_POST = DotName.createSimple("jakarta.ws.rs.POST");
     private static final DotName JAX_RS_PUT = DotName.createSimple("jakarta.ws.rs.PUT");
@@ -134,14 +139,25 @@ class MinecrafterProcessor {
     @BuildStep(onlyIfNot = IsNormal.class, onlyIf = DevServicesConfig.Enabled.class)
     public DevServicesResultBuildItem createContainer(MinecrafterDevServicesConfig config) {
 
+        MinecrafterDevServicesConfig.DevServices devservicesConfig = config.devservices();
+
+        if (!devservicesConfig.enabled()) {
+            log.debug("Not starting Dev Services for Minecraft as it has been disabled in the config");
+            return null;
+        }
+
+        if (ConfigUtils.isPropertyNonEmpty(BASE_URL_CONFIG_KEY)) {
+            log.debug("Not starting Dev Services for Minecraft as a base URL has been provided");
+            return null;
+        }
+
         final int minecraftApiPort = 8081;
 
-        MinecrafterDevServicesConfig.DevServices devservicesConfig = config.devservices();
         return DevServicesResultBuildItem.owned()
                 .feature(FEATURE)
                 .startable(() -> new MinecraftContainer(minecraftApiPort, devservicesConfig.port(),
                         devservicesConfig.reuse()))
-                .configProvider(Map.of("quarkus.minecrafter.base-url",
+                .configProvider(Map.of(BASE_URL_CONFIG_KEY,
                         c -> "http://" + c.getHost() + ":" + c.getMappedPort(minecraftApiPort)))
                 .build();
 

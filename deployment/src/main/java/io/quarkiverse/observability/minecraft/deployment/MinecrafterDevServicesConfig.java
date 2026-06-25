@@ -18,6 +18,14 @@ public interface MinecrafterDevServicesConfig {
 
     interface DevServices {
         /**
+         * Whether the Minecraft dev service is enabled.
+         * Dev Services is generally enabled by default, unless an existing
+         * {@code quarkus.minecrafter.base-url} is configured.
+         */
+        @WithDefault("true")
+        boolean enabled();
+
+        /**
          * Fixed host port to expose the Minecraft game server on.
          * If not set, an ephemeral host port is used.
          */
