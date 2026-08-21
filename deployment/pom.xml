@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.quarkiverse.observability.minecraft</groupId>
     <artifactId>quarkus-observability-minecraft-parent</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.0-SNAPSHOT</version>
   </parent>
   <artifactId>quarkus-observability-minecraft-deployment</artifactId>
   <name>Quarkus Observability Using Minecraft - Deployment</name>
@@ -72,8 +72,4 @@
       </build>
     </profile>
   </profiles>
-
-  <scm>
-    <tag>1.4.0</tag>
-  </scm>
 </project>
