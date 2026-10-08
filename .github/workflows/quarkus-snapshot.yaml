@@ -2,7 +2,7 @@ name: "Quarkus ecosystem CI"
 on:
   workflow_dispatch:
   watch:
-    types: [started]
+    types: [ started ]
 
 permissions:
   contents: read
@@ -22,4 +22,4 @@ jobs:
     secrets: inherit
     with:
       ecosystem_ci_repo_path: quarkiverse-observability-minecraft
-      java_version: 17
+      java_version: 21
