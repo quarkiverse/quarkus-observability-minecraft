@@ -19,7 +19,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
-          java-version: '17' # the mod needs Java 17 still
+          java-version: '17' # the mod needs Java 17 still TODO remove this when the mod level is bumped
           distribution: 'temurin'
           cache: maven
       - name: Test minecraft mod
