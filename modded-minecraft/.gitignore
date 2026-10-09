@@ -2,3 +2,4 @@ build/
 .gradle/
 mcmodsrepo/
 /run/
+/mise.toml
